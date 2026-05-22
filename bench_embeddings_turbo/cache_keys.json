@@ -1,0 +1,12 @@
+{
+  "snapshot_id": "2026-05-16_1fe458f",
+  "case_kb_commit": "1fe458fa6",
+  "snapshot_chunks_parquet_sha": "814c570e914850fe3c952368a4ef7e82c09135466db9b9ead68713f508daa75a",
+  "snapshot_search_duckdb_sha": "0b6a5f0bf4470dd186f030d8b8a85090d372dcb1144925546408a6ee7147f31d",
+  "snapshot_facts_jsonl_sha": "2b5c2651f12e280e8a8837babf369dedbea40fdf1d327ab4809b82e84bacb77e",
+  "snapshot_lancedb_dir_sha": "072ba6c5900fde4e803b7bcaeca3c9a8b22413f6cb7e2e2b64aba0084bc1fcc1",
+  "bench_snapshot_py_sha": "4a767c550e29625d5fb288fc18b73bd06583197dd9f3f1f34c5c8952a906b006",
+  "bench_schemas_py_sha": "662a6e376d71238317e278562b98f6fff8802e006a00b463804407135f06b71d",
+  "bench_scoring_py_sha": "7c7d0625829caf3bc8fe3c398ccad9b08000d063a0eaf8461ffc93636abfb75d",
+  "bench_source_weights_py_sha": "fdb8cfad38d0cb75f623041a57a27fdd576d97e99bd564ad4a1c5a789473b2c0"
+}

@@ -1,0 +1,57 @@
+{
+  "report": "I:\\dev\\LLM\\TurboQuant_Benchmark\\bench_embeddings_turbo\\reports\\2026-05-22_qwen3_q8_turboquant_vs_ollama.html",
+  "ollama": {
+    "label": "Ollama qwen3-embedding:8b-q8_0",
+    "model_id": "qwen3-embedding-8b-q8-ollama",
+    "rows": 5000,
+    "embed_rate": 5.4,
+    "embed_seconds": 923.86,
+    "eval_seconds": 1113.668,
+    "n_queries": 893,
+    "metrics": {
+      "vec_recall_10": 0.0425531914893617,
+      "vec_mrr_10": 0.03174825361275529,
+      "e2e_recall_10": 0.2956326987681971,
+      "e2e_mrr_10": 0.12780177393839207
+    },
+    "by_source_type": {
+      "whatsapp": 0.506578947368421,
+      "email": 0.5404040404040404,
+      "court_doc": 0.7792207792207793,
+      "document_exchange": 0.125,
+      "photo": 0.45,
+      "solicitor_letter": 0.32,
+      "financial": 0.5
+    },
+    "model_size": "8.0 GB via ollama list",
+    "index_size_bytes": 82714140,
+    "index_size": "0.08 GB / 0.08 GiB"
+  },
+  "turbo": {
+    "label": "TurboQuant llama.cpp Qwen3-Embedding-8B Q8_0",
+    "model_id": "qwen3-embedding-8b-q8-turbo",
+    "rows": 5000,
+    "embed_rate": 5.0,
+    "embed_seconds": 1005.547,
+    "eval_seconds": 589.685,
+    "n_queries": 893,
+    "metrics": {
+      "vec_recall_10": 0.03807390817469205,
+      "vec_mrr_10": 0.029530386249311216,
+      "e2e_recall_10": 0.2933930571108623,
+      "e2e_mrr_10": 0.12458095593593912
+    },
+    "by_source_type": {
+      "whatsapp": 0.5131578947368421,
+      "email": 0.5252525252525253,
+      "court_doc": 0.7792207792207793,
+      "document_exchange": 0.125,
+      "photo": 0.45,
+      "solicitor_letter": 0.32,
+      "financial": 0.5
+    },
+    "model_size": "8.05 GB / 7.49 GiB",
+    "index_size_bytes": 82714140,
+    "index_size": "0.08 GB / 0.08 GiB"
+  }
+}

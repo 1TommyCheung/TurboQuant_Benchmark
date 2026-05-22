@@ -1,0 +1,36 @@
+[project]
+name = "bench-embeddings"
+version = "0.1.0"
+description = "Embedding model bake-off harness for Evidence Lake"
+requires-python = ">=3.11"
+dependencies = [
+    "lancedb>=0.13",
+    "duckdb>=1.0",
+    "pyarrow>=15",
+    "pandas>=2.0",
+    "pyyaml>=6",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "plotly>=5.20",
+    "jinja2>=3.1",
+    "httpx>=0.27",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+hf = [
+    "sentence-transformers>=3.0",
+    "transformers>=4.46",
+    "bitsandbytes>=0.43",
+    "torch>=2.4",
+]
+judge = ["litellm>=1.50"]
+serve = ["ollama>=0.3"]
+test = ["pytest>=8", "pytest-mock>=3.12"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

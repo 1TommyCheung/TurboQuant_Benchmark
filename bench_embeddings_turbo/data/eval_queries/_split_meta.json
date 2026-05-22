@@ -1,0 +1,8 @@
+{
+  "seed": 42,
+  "n_total": 500,
+  "n_gemini": 350,
+  "n_claude": 150,
+  "gemini_model": "gemini/gemini-2.5-flash-lite",
+  "claude_source": "claude-code-subagent"
+}

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TurboQuant vs Ollama Qwen3 Embedding 8B Q8 Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5a6573;
+      --line: #d8dee7;
+      --panel: #f7f9fc;
+      --accent: #0f766e;
+      --warn: #9a3412;
+    }
+    body {
+      margin: 0;
+      font-family: Segoe UI, Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      line-height: 1.45;
+    }
+    main {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 36px 28px 48px;
+    }
+    h1, h2 {
+      line-height: 1.15;
+      margin: 0 0 14px;
+      letter-spacing: 0;
+    }
+    h1 { font-size: 34px; }
+    h2 { font-size: 22px; margin-top: 34px; }
+    p { margin: 0 0 14px; color: var(--muted); }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 24px 0;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: var(--panel);
+    }
+    .tile strong {
+      display: block;
+      font-size: 24px;
+      margin-top: 6px;
+      color: var(--ink);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 24px;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: right;
+      vertical-align: top;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    thead th {
+      background: #eef3f7;
+      color: #27313d;
+      font-weight: 650;
+    }
+    .note {
+      border-left: 4px solid var(--warn);
+      background: #fff7ed;
+      padding: 12px 14px;
+      color: #4b2e1f;
+      margin: 18px 0 24px;
+    }
+    .ok { color: var(--accent); font-weight: 650; }
+    code {
+      background: #eef3f7;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    @media (max-width: 760px) {
+      main { padding: 24px 16px; }
+      .summary { grid-template-columns: 1fr; }
+      table { font-size: 13px; }
+      th, td { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>TurboQuant vs Ollama: Qwen3 Embedding 8B Q8</h1>
+  <p>Generated 2026-05-22 08:37:35 from the Windows benchmark folder at <code>I:\dev\LLM\TurboQuant_Benchmark\bench_embeddings_turbo</code>.</p>
+
+  <section class="summary">
+    <div class="tile">Embedding speed<strong>Ollama</strong><span>5.4 chunks/s vs 5.0 chunks/s</span></div>
+    <div class="tile">Eval speed<strong>TurboQuant</strong><span>9.8 min vs 18.6 min</span></div>
+    <div class="tile">Accuracy winner<strong>Ollama</strong><span>Higher on all four aggregate retrieval metrics</span></div>
+    <div class="tile">Index size<strong>Tie</strong><span>0.08 GB / 0.08 GiB each</span></div>
+  </section>
+
+  <div class="note">
+    This run used the first 5,000 rows from the existing stratified 50K sample because the full 50K corpus would take roughly 2.5 hours per backend at the measured rate. Treat absolute recall as a 5K-slice result; the backend-to-backend deltas are the useful signal here.
+  </div>
+
+  <h2>Run Configuration</h2>
+  <table>
+    <thead><tr><th>Item</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><th>Corpus slice</th><td>5,000 chunks from <code>data/chunk_samples/stratified_50k.parquet</code></td></tr>
+      <tr><th>Evaluation queries</th><td>893 queries</td></tr>
+      <tr><th>Embedding dimension</th><td>4096</td></tr>
+      <tr><th>TurboQuant server flags</th><td><code>--embedding --pooling last -ngl all -c 32768 -b 8192 -ub 8192 -fa on --cache-type-k turbo3 --cache-type-v turbo3</code></td></tr>
+      <tr><th>TurboQuant model file</th><td><code>Qwen3-Embedding-8B-Q8_0.gguf</code> from <code>Qwen/Qwen3-Embedding-8B-GGUF</code></td></tr>
+      <tr><th>Ollama model</th><td><code>qwen3-embedding:8b-q8_0</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Speed</h2>
+  <table>
+    <thead><tr><th>Metric</th><th>Ollama</th><th>TurboQuant</th><th>TurboQuant delta</th></tr></thead>
+    <tbody>
+      <tr><th>Embedding throughput</th><td>5.4 chunks/s</td><td>5.0 chunks/s</td><td>-7.4%</td></tr>
+      <tr><th>Embedding wall time</th><td>15.4 min</td><td>16.8 min</td><td>1.4 min</td></tr>
+      <tr><th>Eval wall time</th><td>18.6 min</td><td>9.8 min</td><td>-47.1%</td></tr>
+      <tr><th>Estimated 50K embedding time</th><td>154.3 min</td><td>166.7 min</td><td>Based on final 5K rate</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Accuracy</h2>
+  <table>
+    <thead><tr><th>Metric</th><th>Ollama</th><th>TurboQuant</th><th>TurboQuant delta</th><th>Winner</th></tr></thead>
+    <tbody>
+      <tr><th>Vector recall@10</th><td>4.26%</td><td>3.81%</td><td>-0.45 pp</td><td>Ollama</td></tr>
+      <tr><th>Vector MRR@10</th><td>3.17%</td><td>2.95%</td><td>-0.22 pp</td><td>Ollama</td></tr>
+      <tr><th>End-to-end recall@10</th><td>29.56%</td><td>29.34%</td><td>-0.22 pp</td><td>Ollama</td></tr>
+      <tr><th>End-to-end MRR@10</th><td>12.78%</td><td>12.46%</td><td>-0.32 pp</td><td>Ollama</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Accuracy By Source Type</h2>
+  <table>
+    <thead><tr><th>Source type</th><th>Ollama</th><th>TurboQuant</th><th>TurboQuant delta</th></tr></thead>
+    <tbody>
+      <tr><th>court_doc</th><td>77.92%</td><td>77.92%</td><td>+0.00 pp</td></tr>
+<tr><th>document_exchange</th><td>12.50%</td><td>12.50%</td><td>+0.00 pp</td></tr>
+<tr><th>email</th><td>54.04%</td><td>52.53%</td><td>-1.52 pp</td></tr>
+<tr><th>financial</th><td>50.00%</td><td>50.00%</td><td>+0.00 pp</td></tr>
+<tr><th>photo</th><td>45.00%</td><td>45.00%</td><td>+0.00 pp</td></tr>
+<tr><th>solicitor_letter</th><td>32.00%</td><td>32.00%</td><td>+0.00 pp</td></tr>
+<tr><th>whatsapp</th><td>50.66%</td><td>51.32%</td><td>+0.66 pp</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Size</h2>
+  <table>
+    <thead><tr><th>Item</th><th>Ollama</th><th>TurboQuant</th></tr></thead>
+    <tbody>
+      <tr><th>Model payload</th><td>8.0 GB via ollama list</td><td>8.05 GB / 7.49 GiB</td></tr>
+      <tr><th>Lance index for 5K embeddings</th><td>0.08 GB / 0.08 GiB</td><td>0.08 GB / 0.08 GiB</td></tr>
+      <tr><th>TurboQuant Windows package</th><td>Not applicable</td><td>0.77 GB zip, 1.48 GB extracted runtime</td></tr>
+    </tbody>
+  </table>
+
+  <h2>VRAM</h2>
+  <table>
+    <thead><tr><th>Item</th><th>Observed / estimated value</th></tr></thead>
+    <tbody>
+      <tr><th>TurboQuant model buffer on GPU</th><td>7,668.64 MiB</td></tr>
+      <tr><th>TurboQuant turbo3 KV cache at 32K context</th><td>900 MiB total: 450 MiB K, 450 MiB V</td></tr>
+      <tr><th>Estimated FP16 KV cache for same 32K context</th><td>4,608 MiB</td></tr>
+      <tr><th>Estimated KV-cache saving</th><td>3,708 MiB, about 5.1x smaller than FP16 KV</td></tr>
+      <tr><th>Ollama comparison caveat</th><td>Ollama did not expose a comparable per-buffer VRAM breakdown in this run, so this is a confirmed TurboQuant KV-cache advantage, not a measured total-process VRAM win over Ollama.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Conclusion</h2>
+  <p><span class="ok">Ollama wins embedding throughput and aggregate retrieval accuracy in this bounded Windows comparison.</span> TurboQuant ran successfully with Qwen's embedding settings and TurboQuant cache enabled, and its query/eval pass was faster, but the corpus embedding pass did not produce a speed advantage over Ollama. TurboQuant did provide a clear KV-cache VRAM advantage at 32K context; total VRAM was not captured apples-to-apples against Ollama. Size is effectively tied for the generated vector indexes; TurboQuant adds its standalone Windows runtime footprint.</p>
+</main>
+</body>
+</html>
