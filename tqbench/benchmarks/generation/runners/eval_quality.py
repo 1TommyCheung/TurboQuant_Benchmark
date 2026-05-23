@@ -39,7 +39,10 @@ def run_quality_eval(model_id: str) -> Path:
         "--output_path", str(out_dir),
     ]
     log.info(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    import os
+    env = os.environ.copy()
+    env["HF_HUB_DISABLE_FILE_LOCK"] = "1"
+    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
     if result.returncode != 0:
         log.error(f"lm_eval failed:\n{result.stderr}")
         raise RuntimeError(f"lm_eval exited with code {result.returncode}")
