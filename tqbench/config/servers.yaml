@@ -1,0 +1,19 @@
+servers:
+  ollama-local:
+    type: ollama
+    host: http://127.0.0.1:11434
+
+  turboquant-local:
+    type: llamacpp
+    host: http://127.0.0.1:8080
+
+  vllm-docker:
+    type: vllm
+    host: http://127.0.0.1:8800
+
+  gemini:
+    type: gemini_api
+
+  hf-local:
+    type: hf
+    device: cuda
