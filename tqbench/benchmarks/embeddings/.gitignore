@@ -1,0 +1,10 @@
+# Generated output — not committed
+indexes/
+reports/raw/
+reports/*.html
+reports/*_summary.json
+data/chunk_samples/
+data/eval_queries/layer1_pool_judged.jsonl
+data/eval_queries/layer2a_perturbed.jsonl
+data/eval_queries/layer2b_synthetic.jsonl
+data/eval_queries/adversarial_gemini_failures.jsonl
