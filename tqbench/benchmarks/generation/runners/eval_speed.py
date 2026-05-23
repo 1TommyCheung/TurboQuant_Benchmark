@@ -129,8 +129,7 @@ async def run_concurrency_level(
             async with sem:
                 result = await _stream_one(client, model, prompt)
                 done_count += 1
-                if done_count % 10 == 0 or done_count == total:
-                    log.info(f"  [{done_count}/{total}] lat={result['total_time_s']:.2f}s tok={result['completion_tokens']}")
+                log.info(f"  [{done_count}/{total}] {result['id']}  lat={result['total_time_s']:.2f}s  ttft={result['ttft_s']*1000:.0f}ms  tok={result['completion_tokens']}")
                 return result
 
         t0 = time.perf_counter()
