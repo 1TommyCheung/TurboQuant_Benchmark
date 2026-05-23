@@ -14,11 +14,16 @@ def aggregate_stream_results(
     latencies = np.array([r.total_time_s for r in results])
     total_tokens = sum(r.completion_tokens for r in results)
 
+    tokens_per_req = np.array([r.completion_tokens for r in results])
+
     return {
         "n_requests": len(results),
         "total_output_tokens": int(total_tokens),
+        "tokens_per_request_median": float(np.median(tokens_per_req)),
+        "tokens_per_request_mean": float(np.mean(tokens_per_req)),
         "wall_time_s": wall_time_s,
         "throughput_tok_s": total_tokens / wall_time_s if wall_time_s > 0 else 0,
+        "throughput_req_s": len(results) / wall_time_s if wall_time_s > 0 else 0,
         "ttft_median_s": float(np.median(ttfts)),
         "ttft_p95_s": float(np.percentile(ttfts, 95)),
         "ttft_p99_s": float(np.percentile(ttfts, 99)),
@@ -26,6 +31,7 @@ def aggregate_stream_results(
         "itl_p95_ms": float(np.percentile(all_itl, 95)) if len(all_itl) > 0 else 0,
         "latency_median_s": float(np.median(latencies)),
         "latency_p95_s": float(np.percentile(latencies, 95)),
+        "latency_p99_s": float(np.percentile(latencies, 99)),
     }
 
 

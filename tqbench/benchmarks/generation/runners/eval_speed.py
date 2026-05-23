@@ -178,11 +178,10 @@ def main() -> None:
         agg["server_metrics"] = metrics.mark()
         all_results[conc] = agg
         kv = agg["server_metrics"]
-        log.info(f"  throughput={agg['throughput_tok_s']:.1f} tok/s  "
-                 f"ttft_p50={agg['ttft_median_s']*1000:.0f}ms  "
-                 f"itl_p50={agg['itl_median_ms']:.1f}ms  "
-                 f"vram_peak={agg['peak_vram_mb']}MB  "
-                 f"kv_cache={kv['kv_cache_usage_peak_pct']:.1f}%")
+        log.info(f"  tok/s={agg['throughput_tok_s']:.1f}  req/s={agg['throughput_req_s']:.2f}  "
+                 f"lat_p50={agg['latency_median_s']:.2f}s  ttft_p50={agg['ttft_median_s']*1000:.0f}ms  "
+                 f"itl_p50={agg['itl_median_ms']:.1f}ms  tok/req={agg['tokens_per_request_median']:.0f}  "
+                 f"wall={wall:.1f}s  vram={agg['peak_vram_mb']}MB  kv={kv['kv_cache_usage_peak_pct']:.1f}%")
 
     peak_vram_mb = vram.stop()
     metrics.stop()
