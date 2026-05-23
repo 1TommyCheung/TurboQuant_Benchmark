@@ -57,7 +57,7 @@ def run(model_id: str) -> None:
             json={
                 "model": spec.model_name,
                 "messages": [{"role": "user", "content": q["q"]}],
-                "max_tokens": 512,
+                "max_tokens": 8192,
                 "temperature": 0.0,
                 "chat_template_kwargs": {"enable_thinking": False},
             },
