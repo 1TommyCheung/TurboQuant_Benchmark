@@ -16,7 +16,7 @@ from tqbench.config import get_server
 from tqbench.benchmarks.generation.models import get_candidate, quality_groups
 
 REPORTS = Path(__file__).resolve().parents[1] / "reports" / "raw"
-TASKS = "tinyMMLU,tinyHellaSwag,tinyARC,tinyWinogrande"
+TASKS = "tinyMMLU,tinyHellaswag,tinyArc,tinyWinogrande"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
