@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Embeddings Benchmark — {{ run_date }}</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { background: '#25252b' } });
+</script>
+<style>
+  :root {
+    --accent: #8abeb7; --border: #5f87ff; --bg: #1a1a1f; --bg-card: #25252b;
+    --text: #e5e5e7; --muted: #808080; --success: #b5bd68; --error: #cc6666;
+    --warning: #ffff00;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif;
+         line-height: 1.6; max-width: 1240px; margin: 0 auto; padding: 2em; }
+  h1 { color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 0.5em; }
+  h2 { color: var(--accent); margin-top: 2em; border-bottom: 1px solid #333; padding-bottom: 0.25em; }
+  h3 { color: var(--accent); margin-top: 1.5em; }
+  p { color: var(--text); }
+  a { color: var(--accent); }
+  .verdict-banner { padding: 1.5em; border-radius: 8px; font-size: 1.2em; font-weight: bold;
+                    text-align: center; margin: 1em 0; }
+  .verdict-switch { background: rgba(181, 189, 104, 0.2); border: 2px solid var(--success); }
+  .verdict-stay { background: rgba(204, 102, 102, 0.2); border: 2px solid var(--error); }
+  .verdict-inconclusive { background: rgba(128, 128, 128, 0.2); border: 2px solid var(--muted); }
+  .verdict-rationale { font-weight: normal; font-size: 0.9em; margin-top: 0.6em; color: var(--text); opacity: 0.85; }
+  table { border-collapse: collapse; width: 100%; background: var(--bg-card); margin: 0.5em 0 1em; }
+  th, td { padding: 0.55em 0.9em; border-bottom: 1px solid #333; text-align: left; }
+  th { background: rgba(95, 135, 255, 0.1); color: var(--accent); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .winner-row { background: rgba(181, 189, 104, 0.07); }
+  .baseline-row { background: rgba(95, 135, 255, 0.08); }
+  .veto { color: var(--error); font-size: 0.85em; }
+  .chart-container { background: var(--bg-card); border-radius: 8px; padding: 1em; margin: 1em 0; }
+  .chart-container.empty { padding: 1.4em; color: var(--muted); font-style: italic; text-align: center; }
+  .mermaid { background: var(--bg-card); border-radius: 8px; padding: 1em; }
+  details { background: var(--bg-card); padding: 1em 1.2em; border-radius: 8px; margin: 1em 0; }
+  summary { cursor: pointer; color: var(--accent); font-weight: bold; padding: 0.2em 0; }
+  summary:hover { color: var(--text); }
+  details[open] summary { border-bottom: 1px solid #333; margin-bottom: 0.6em; padding-bottom: 0.4em; }
+  .caveats li { color: var(--muted); margin-bottom: 0.3em; }
+  .meta { color: var(--muted); font-size: 0.9em; }
+  code { background: rgba(128,128,128,0.15); padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<h1>Embeddings Benchmark Report</h1>
+<p class="meta"><strong>Run date:</strong> {{ run_date }} &middot; <strong>Candidates:</strong> {{ n_models }} &middot; <strong>Baseline:</strong> <code>{{ baseline_id }}</code> &middot; <strong>Spec:</strong> <code>docs/superpowers/specs/2026-05-15-embeddings-benchmark-design.md</code></p>
+
+<div class="verdict-banner verdict-{{ verdict.verdict }}">
+  Verdict: {{ verdict.verdict | upper }}
+  {% if verdict.winner_id %} &middot; Winner: <code>{{ verdict.winner_id }}</code>{% endif %}
+  {% if verdict.rationale %}<div class="verdict-rationale">{{ verdict.rationale }}</div>{% endif %}
+</div>
+
+<h2>1. Executive summary</h2>
+<table>
+  <tr>
+    <th>Model</th>
+    <th class="num">dim</th>
+    <th class="num">Vec q</th>
+    <th class="num">E2E q</th>
+    <th class="num">Long-ctx</th>
+    <th class="num">Local-ctrl</th>
+    <th class="num">Raw</th>
+    <th class="num">Dim pen.</th>
+    <th class="num">Total</th>
+    <th>Vetoes</th>
+  </tr>
+  {% for s in scores %}
+  <tr class="{% if s.model_id == verdict.winner_id %}winner-row{% elif s.model_id == baseline_id %}baseline-row{% endif %}">
+    <td><code>{{ s.model_id }}</code>{% if s.model_id == baseline_id %} <span class="meta">(baseline)</span>{% elif s.model_id == verdict.winner_id %} 🏆{% endif %}</td>
+    <td class="num">{{ s.dim }}</td>
+    <td class="num">{{ "%.1f"|format(s.quality_vector_only) }}</td>
+    <td class="num">{{ "%.1f"|format(s.quality_end_to_end) }}</td>
+    <td class="num">{{ "%.1f"|format(s.long_context) }}</td>
+    <td class="num">{{ "%.1f"|format(s.local_control) }}</td>
+    <td class="num">{{ "%.1f"|format(s.raw_total) }}</td>
+    <td class="num">-{{ "%.1f"|format(s.dim_penalty) }}</td>
+    <td class="num"><strong>{{ "%.1f"|format(s.total) }}</strong></td>
+    <td class="veto">{{ s.veto_reasons | join("; ") }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="meta">All metrics are 0–100 scaled. <strong>Vec q</strong> = vector-only recall@10 × 100. <strong>E2E q</strong> = recall@10 through full hybrid pipeline (vector + BM25 + RRF). <strong>Long-ctx</strong> = mean E2E recall@10 over long + very_long length buckets. <strong>Local-ctrl</strong> = spec formula (cost saved + ctx headroom + offline tolerance). <strong>Dim pen.</strong> = 3pt penalty when candidate dim ≠ baseline dim (full re-index + RRF retune cost).</p>
+
+<h2>2. Benchmark architecture</h2>
+<div class="mermaid">
+{{ mermaid_diagram }}
+</div>
+
+<h2>3. Corpus profile</h2>
+{% if corpus_donut %}<div class="chart-container">{{ corpus_donut | safe }}</div>{% else %}<div class="chart-container empty">No corpus sample loaded.</div>{% endif %}
+{% if corpus_histogram %}<div class="chart-container">{{ corpus_histogram | safe }}</div>{% endif %}
+
+<h2>4. Quality — by source type</h2>
+{% if quality_by_st_chart %}<div class="chart-container">{{ quality_by_st_chart | safe }}</div>{% else %}<div class="chart-container empty">No per-source-type data.</div>{% endif %}
+
+<h2>5. Quality — by length bucket <span class="meta">(the long-context axis)</span></h2>
+{% if quality_by_lb_chart %}<div class="chart-container">{{ quality_by_lb_chart | safe }}</div>{% else %}<div class="chart-container empty">Length-bucket aggregation unavailable.</div>{% endif %}
+
+<h2>6. Quality — vector-only vs full hybrid</h2>
+{% if vector_vs_e2e_chart %}<div class="chart-container">{{ vector_vs_e2e_chart | safe }}</div>{% else %}<div class="chart-container empty">No vec/e2e data.</div>{% endif %}
+
+<h2>7. Quality — head-to-head delta vs <code>{{ baseline_id }}</code></h2>
+{% if head_to_head_heatmap %}<div class="chart-container">{{ head_to_head_heatmap | safe }}</div>{% else %}<div class="chart-container empty">No baseline comparison available.</div>{% endif %}
+
+<h2>8. Recall-bound view <span class="meta">(recall@10 vs recall@100)</span></h2>
+{% if recall_bound_chart %}<div class="chart-container">{{ recall_bound_chart | safe }}</div>{% else %}<div class="chart-container empty">No recall@100 data.</div>{% endif %}
+
+<h2>9. Adversarial Gemini-failure set</h2>
+{% if adversarial_chart %}<div class="chart-container">{{ adversarial_chart | safe }}</div>{% else %}<div class="chart-container empty">No adversarial-set results (n=0).</div>{% endif %}
+
+<h2>10. Per-layer eval breakdown</h2>
+{% if layer_breakdown_chart %}<div class="chart-container">{{ layer_breakdown_chart | safe }}</div>{% else %}<div class="chart-container empty">No layer breakdown.</div>{% endif %}
+
+<h2>11. Phase 1 speed <span class="meta">(embed throughput + query encode latency)</span></h2>
+{% if has_speed_phase1 %}
+<p class="meta">Throughput and per-query latency extracted from the Phase 1 embed_corpus and eval_quality run logs. Phase 1 uses sentence-transformers + bitsandbytes / native precision; Phase 2 (vLLM/Ollama, top-2 only) is the production-realistic serving path measured separately when run.</p>
+
+<table>
+  <tr>
+    <th>Model</th>
+    <th class="num">chunks/s (embed)</th>
+    <th class="num">50K wall (min)</th>
+    <th class="num">251K projected (min)</th>
+    <th class="num">eval q/s</th>
+    <th class="num">ms / query</th>
+  </tr>
+  {% for r in speed_phase1_rows %}
+  <tr class="{% if r.model_id == verdict.winner_id %}winner-row{% elif r.model_id == baseline_id %}baseline-row{% endif %}">
+    <td><code>{{ r.model_id }}</code></td>
+    <td class="num">{{ "%.1f"|format(r.embed_chunks_per_s) }}</td>
+    <td class="num">{{ "%.1f"|format(r.embed_wall_minutes_50k) }}</td>
+    <td class="num">{{ "%.1f"|format(r.approx_wall_minutes_251k) }}</td>
+    <td class="num">{{ "%.2f"|format(r.eval_queries_per_s) }}</td>
+    <td class="num">{{ "%.0f"|format(r.ms_per_query) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="meta"><strong>251K projected</strong> = wall time to re-embed the full production corpus at the measured Phase 1 throughput. This is the dominant cost of a "switch" verdict.</p>
+
+<div class="chart-container">{{ speed_phase1_embed | safe }}</div>
+<div class="chart-container">{{ speed_phase1_eval | safe }}</div>
+{% else %}
+<div class="chart-container empty">No Phase 1 speed data — run <code>python -m runners.extract_speed_phase1</code> after embed+eval to populate.</div>
+{% endif %}
+
+<details>
+  <summary>12. Phase 2 speed (vLLM/Ollama — top-2 only)</summary>
+  {% if has_speed_phase2 %}
+    {% if throughput_chart %}<div class="chart-container">{{ throughput_chart | safe }}</div>{% endif %}
+    {% if latency_chart %}<div class="chart-container">{{ latency_chart | safe }}</div>{% endif %}
+    {% if vram_chart %}<div class="chart-container">{{ vram_chart | safe }}</div>{% endif %}
+  {% else %}
+    <p class="meta"><em>Phase 2 not run. Run <code>python -m runners.eval_speed --model &lt;id&gt;</code> on the top-2 quality finishers to populate this section. Measures token/sec throughput at token-budgeted batches, P50/P95 latency via <code>vegeta</code>, VRAM peak, cold-start, and co-tenancy stress with a 7B-class enrichment LLM.</em></p>
+  {% endif %}
+</details>
+
+<details>
+  <summary>13. Methodology &amp; caveats</summary>
+  <ul class="caveats">
+    {% for note in methodology_notes %}
+    <li>{{ note }}</li>
+    {% endfor %}
+  </ul>
+</details>
+
+<h2>16. Phase A — Agent-level retrieval diff <span class="meta">(Gemini vs Harrier on actual session calls)</span></h2>
+{% if has_phase_a %}
+<div class="verdict-banner verdict-{{ 'switch' if phase_a_verdict.verdict == 'A1' else 'stay' if phase_a_verdict.verdict == 'A2' else 'inconclusive' }}">
+  Phase A verdict: <strong>{{ phase_a_verdict.verdict }}</strong> &middot; {{ phase_a_verdict.label }}
+  <div class="verdict-rationale">{{ phase_a_verdict.rationale }}</div>
+</div>
+
+<h3>16.1 Per-call jaccard@10</h3>
+{% if phase_a_per_call_chart %}<div class="chart-container">{{ phase_a_per_call_chart | safe }}</div>{% endif %}
+
+<h3>16.2 Sonnet judge — verdict distribution across all 11 turns</h3>
+{% if phase_a_judge_chart %}<div class="chart-container">{{ phase_a_judge_chart | safe }}</div>{% endif %}
+
+<p class="meta"><strong>Decision rule (spec §5.4):</strong> A1 requires median jaccard@10 ≥ 0.90 AND median cited_weighted_overlap ≥ 0.95 AND judge marks sufficient/better_than_gemini on ≥ 9 of 11 turns. A2 if median jaccard < 0.70 OR median cited_weighted < 0.80 OR insufficient verdicts ≥ 5 of 11. A3 otherwise.</p>
+
+<p class="meta"><strong>Snapshot:</strong> All Phase A metrics computed against frozen snapshot <code>2026-05-16_1fe458f</code> (case_kb commit <code>1fe458fa6</code>) — see <code>bench_embeddings/SNAPSHOT.md</code>.</p>
+{% else %}
+<div class="chart-container empty">Phase A artifacts not present. Run replay_search_static + judge_all_turns first, then rebuild.</div>
+{% endif %}
+
+<p class="meta" style="margin-top:3em; text-align:center;">Generated {{ run_date }} · See <code>docs/superpowers/results/{{ run_date }}-embeddings-benchmark-results.md</code> for the shareable summary.</p>
+
+</body>
+</html>
