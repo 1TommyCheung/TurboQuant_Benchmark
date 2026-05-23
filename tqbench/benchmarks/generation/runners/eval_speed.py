@@ -22,6 +22,8 @@ from tqbench.benchmarks.generation.models import get_candidate, load_registry
 from tqbench.benchmarks.generation.speed_metrics import aggregate_stream_results
 from tqbench.benchmarks.generation.vram import VRAMSampler, ServerMetricsSampler
 
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 BENCH_ROOT = Path(__file__).resolve().parents[1]
 DATA = BENCH_ROOT / "data"
 REPORTS = BENCH_ROOT / "reports" / "raw"
