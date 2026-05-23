@@ -1,0 +1,94 @@
+candidates:
+  # ── vLLM configs ──
+  - id: qwen3.5-9b-fp8-vllm
+    server: vllm-docker
+    model_name: Qwen/Qwen3.5-9B-FP8
+    hf_repo: Qwen/Qwen3.5-9B-FP8
+    max_tokens: 4096
+    quality_group: fp8
+    notes: vLLM baseline, no speculative decoding.
+
+  - id: qwen3.5-9b-fp8-vllm-mtp
+    server: vllm-docker
+    model_name: Qwen/Qwen3.5-9B-FP8
+    hf_repo: Qwen/Qwen3.5-9B-FP8
+    max_tokens: 4096
+    spec_decode: mtp
+    quality_group: fp8
+    notes: vLLM + native MTP.
+
+  - id: qwen3.5-9b-fp8-vllm-dflash
+    server: vllm-docker
+    model_name: Qwen/Qwen3.5-9B-FP8
+    hf_repo: Qwen/Qwen3.5-9B-FP8
+    max_tokens: 4096
+    spec_decode: dflash
+    drafter_repo: z-lab/Qwen3.5-9B-DFlash
+    quality_group: fp8
+    notes: vLLM + DFlash via vllm-speculators.
+
+  # ── SGLang configs ──
+  - id: qwen3.5-9b-fp8-sglang
+    server: sglang-local
+    model_name: Qwen/Qwen3.5-9B-FP8
+    hf_repo: Qwen/Qwen3.5-9B-FP8
+    max_tokens: 4096
+    quality_group: fp8
+    notes: SGLang baseline, no speculative decoding.
+
+  - id: qwen3.5-9b-fp8-sglang-mtp
+    server: sglang-local
+    model_name: Qwen/Qwen3.5-9B-FP8
+    hf_repo: Qwen/Qwen3.5-9B-FP8
+    max_tokens: 4096
+    spec_decode: mtp
+    quality_group: fp8
+    notes: SGLang + native MTP.
+
+  - id: qwen3.5-9b-fp8-sglang-dflash
+    server: sglang-local
+    model_name: Qwen/Qwen3.5-9B-FP8
+    hf_repo: Qwen/Qwen3.5-9B-FP8
+    max_tokens: 4096
+    spec_decode: dflash
+    drafter_repo: z-lab/Qwen3.5-9B-DFlash
+    quality_group: fp8
+    notes: SGLang + DFlash.
+
+  # ── llama.cpp configs ──
+  - id: qwen3.5-9b-q8-beellama-dflash
+    server: beellama-local
+    model_name: qwen3.5-9b
+    gguf_file: Qwen3.5-9B-Q8_0.gguf
+    max_tokens: 4096
+    spec_decode: dflash
+    quality_group: q8
+    notes: beellama.cpp with DFlash + TurboQuant KV.
+
+  - id: qwen3.5-9b-q8-turboquant
+    server: turboquant-local
+    model_name: qwen3.5-9b
+    gguf_file: Qwen3.5-9B-Q8_0.gguf
+    max_tokens: 4096
+    quality_group: q8
+    notes: TurboQuant llama.cpp, turbo cache only.
+
+  # ── Lucebox configs ──
+  - id: qwen3.5-9b-q8-lucebox
+    server: lucebox-local
+    model_name: qwen3.5-9b
+    gguf_file: Qwen3.5-9B-Q8_0.gguf
+    max_tokens: 4096
+    spec_decode: dflash
+    quality_group: q8
+    notes: Lucebox-Hub with DFlash, no PFlash.
+
+  - id: qwen3.5-9b-q8-lucebox-pflash
+    server: lucebox-local
+    model_name: qwen3.5-9b
+    gguf_file: Qwen3.5-9B-Q8_0.gguf
+    max_tokens: 4096
+    spec_decode: dflash
+    spec_prefill: pflash
+    quality_group: q8
+    notes: Lucebox-Hub full pipeline — PFlash + DFlash.
