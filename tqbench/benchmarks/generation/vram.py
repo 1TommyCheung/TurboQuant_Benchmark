@@ -1,5 +1,6 @@
 """GPU memory sampling — nvidia-smi for raw VRAM, /metrics for KV cache usage."""
 from __future__ import annotations
+import logging
 import subprocess
 import threading
 import time
@@ -91,6 +92,7 @@ class ServerMetricsSampler:
         }
 
     def _run(self) -> None:
+        logging.getLogger("httpx").setLevel(logging.WARNING)
         client = httpx.Client(base_url=self.base_url, timeout=5)
         while not self._stop.is_set():
             try:
