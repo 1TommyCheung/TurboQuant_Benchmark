@@ -32,7 +32,7 @@ def run_quality_eval(model_id: str) -> Path:
 
     cmd = [
         sys.executable, "-m", "lm_eval",
-        "--model", "local-chat-completions",
+        "--model", "local-completions",
         "--model_args", f"model={spec.model_name},base_url={host}/v1,tokenizer_backend=huggingface",
         "--tasks", TASKS,
         "--batch_size", "1",
