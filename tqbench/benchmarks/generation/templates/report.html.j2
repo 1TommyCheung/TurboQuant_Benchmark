@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Generation Benchmark — {{ run_date }}</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  :root {
+    --accent: #8abeb7; --border: #5f87ff; --bg: #1a1a1f; --bg-card: #25252b;
+    --text: #e5e5e7; --muted: #808080; --success: #b5bd68; --error: #cc6666;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif;
+         line-height: 1.6; max-width: 1240px; margin: 0 auto; padding: 2em; }
+  h1 { color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 0.5em; }
+  h2 { color: var(--accent); margin-top: 2em; border-bottom: 1px solid #333; padding-bottom: 0.25em; }
+  table { border-collapse: collapse; width: 100%; background: var(--bg-card); margin: 0.5em 0 1em; }
+  th, td { padding: 0.55em 0.9em; border-bottom: 1px solid #333; text-align: left; }
+  th { background: rgba(95, 135, 255, 0.1); color: var(--accent); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .chart-container { background: var(--bg-card); border-radius: 8px; padding: 1em; margin: 1em 0; }
+  .chart-container.empty { padding: 1.4em; color: var(--muted); font-style: italic; text-align: center; }
+  .meta { color: var(--muted); font-size: 0.9em; }
+  code { background: rgba(128,128,128,0.15); padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.9em; }
+  .pass { color: var(--success); } .fail { color: var(--error); }
+</style>
+</head>
+<body>
+<h1>Generation Benchmark Report</h1>
+<p class="meta"><strong>Run date:</strong> {{ run_date }} &middot; <strong>Configs:</strong> {{ n_configs }} &middot; <strong>Model:</strong> <code>Qwen3.5-9B</code></p>
+
+<h2>1. Executive Summary</h2>
+{% if quality_summary %}
+<h3>Quality (tinyBenchmarks)</h3>
+<table>
+<tr><th>Group</th><th>tinyMMLU</th><th>tinyHellaSwag</th><th>tinyARC</th><th>tinyWinogrande</th><th>Status</th></tr>
+{% for g in quality_summary %}
+<tr>
+  <td><code>{{ g.group }}</code></td>
+  <td class="num">{{ "%.1f"|format(g.tinyMMLU * 100) }}%</td>
+  <td class="num">{{ "%.1f"|format(g.tinyHellaSwag * 100) }}%</td>
+  <td class="num">{{ "%.1f"|format(g.tinyARC * 100) }}%</td>
+  <td class="num">{{ "%.1f"|format(g.tinyWinogrande * 100) }}%</td>
+  <td class="{{ 'pass' if g.pass else 'fail' }}">{{ 'PASS' if g.pass else 'FAIL' }}</td>
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<div class="chart-container empty">No quality data.</div>
+{% endif %}
+
+<h2>2. Configuration Matrix</h2>
+<table>
+<tr><th>Config</th><th>Server</th><th>Prefill</th><th>Decode</th></tr>
+{% for c in configs %}
+<tr>
+  <td><code>{{ c.id }}</code></td>
+  <td>{{ c.server }}</td>
+  <td>{{ c.spec_prefill or 'standard' }}</td>
+  <td>{{ c.spec_decode or 'standard' }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>3. Throughput vs Concurrency</h2>
+{% if throughput_chart %}<div class="chart-container">{{ throughput_chart | safe }}</div>{% else %}<div class="chart-container empty">No speed data.</div>{% endif %}
+
+<h2>4. TTFT by Concurrency</h2>
+{% if ttft_chart %}<div class="chart-container">{{ ttft_chart | safe }}</div>{% else %}<div class="chart-container empty">No TTFT data.</div>{% endif %}
+
+<h2>5. ITL Distribution</h2>
+{% if itl_chart %}<div class="chart-container">{{ itl_chart | safe }}</div>{% else %}<div class="chart-container empty">No ITL data.</div>{% endif %}
+
+<h2>6. Long-Context TTFT (1K → 128K)</h2>
+{% if longctx_chart %}<div class="chart-container">{{ longctx_chart | safe }}</div>{% else %}<div class="chart-container empty">No long-context TTFT data.</div>{% endif %}
+
+<h2>7. VRAM Usage</h2>
+{% if vram_chart %}<div class="chart-container">{{ vram_chart | safe }}</div>{% else %}<div class="chart-container empty">No VRAM data.</div>{% endif %}
+
+<h2>8. Speculative Decoding Comparison</h2>
+{% if spec_decode_chart %}<div class="chart-container">{{ spec_decode_chart | safe }}</div>{% else %}<div class="chart-container empty">No spec decode comparison data.</div>{% endif %}
+
+<h2>9. Latency Table</h2>
+{% if latency_rows %}
+<table>
+<tr><th>Config</th><th class="num">TTFT p50 (ms)</th><th class="num">TTFT p95 (ms)</th><th class="num">ITL p50 (ms)</th><th class="num">ITL p95 (ms)</th><th class="num">Latency p50 (s)</th><th class="num">Latency p95 (s)</th></tr>
+{% for r in latency_rows %}
+<tr>
+  <td><code>{{ r.id }}</code></td>
+  <td class="num">{{ "%.0f"|format(r.ttft_p50_ms) }}</td>
+  <td class="num">{{ "%.0f"|format(r.ttft_p95_ms) }}</td>
+  <td class="num">{{ "%.1f"|format(r.itl_p50_ms) }}</td>
+  <td class="num">{{ "%.1f"|format(r.itl_p95_ms) }}</td>
+  <td class="num">{{ "%.2f"|format(r.lat_p50_s) }}</td>
+  <td class="num">{{ "%.2f"|format(r.lat_p95_s) }}</td>
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<div class="chart-container empty">No latency data.</div>
+{% endif %}
+
+<h2>10. Methodology</h2>
+<ul class="meta">
+  <li>Prompt sets: short (&lt;100 tok), medium (100-500 tok), long (500-2000 tok), longctx (1K-128K tok)</li>
+  <li>Temperature: 0.0 (deterministic)</li>
+  <li>Concurrency levels: 1, 4, 16, 64</li>
+  <li>Quality: tinyBenchmarks via lm-evaluation-harness (tinyMMLU, tinyHellaSwag, tinyARC, tinyWinogrande)</li>
+  <li>VRAM sampled every 1s via nvidia-smi</li>
+</ul>
+
+<p class="meta" style="margin-top:3em; text-align:center;">Generated {{ run_date }}</p>
+</body>
+</html>
