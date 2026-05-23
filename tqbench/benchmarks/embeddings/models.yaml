@@ -1,0 +1,226 @@
+# Embeddings benchmark model registry.
+# Server connection details live in tqbench/config/servers.yaml — only
+# model identity (weights, dimensions, precision) is stored here.
+candidates:
+  - id: gemini-embedding-001
+    server: gemini
+    dim: 3072
+    max_ctx_tokens: 2048
+    precision: api
+    notes: Production baseline (V1).
+
+  - id: gemini-embedding-2
+    server: gemini
+    dim: 3072
+    max_ctx_tokens: 32768
+    precision: api
+    notes: >-
+      Gemini V2 — same dim as V1 (3072), 4x context window (8192 vs 2048).
+      The big-context win versus V1 should help on long court docs that V1
+      truncated.
+
+  - id: qwen3-embedding-8b-fp16
+    server: hf-local
+    hf_repo: Qwen/Qwen3-Embedding-8B
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: fp16
+    vram_estimate_gb: 16
+    notes: Upper bound for the primary candidate.
+
+  - id: qwen3-embedding-8b-int8
+    server: hf-local
+    hf_repo: Qwen/Qwen3-Embedding-8B
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: int8
+    quantization: bitsandbytes
+    vram_estimate_gb: 9
+    notes: Production candidate (matches user intent).
+
+  - id: kalm-gemma3-12b-int8
+    server: hf-local
+    hf_repo: tencent/KaLM-Embedding-Gemma3-12B-2511
+    dim: 3584
+    max_ctx_tokens: 32768
+    precision: int8
+    quantization: bitsandbytes
+    vram_estimate_gb: 15
+    notes: Top-of-leaderboard local model that still fits.
+
+  - id: llama-embed-nemotron-8b-int8
+    server: hf-local
+    hf_repo: nvidia/llama-embed-nemotron-8b
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: fp16
+    quantization: bitsandbytes
+    vram_estimate_gb: 16
+    notes: >-
+      NVIDIA peer to Qwen3-8B. NOTE — INT8 fallback to FP16 — bitsandbytes
+      0.48 int8_matmul kernel fails on RTX 4090/CUDA 13.1 (invalid
+      configuration argument in ops.cu). Same id retained for table-name
+      consistency; actual precision is FP16.
+
+  - id: harrier-oss-0.6b-bf16
+    server: hf-local
+    hf_repo: microsoft/harrier-oss-v1-0.6b
+    dim: 1024
+    max_ctx_tokens: 32768
+    precision: bf16
+    vram_estimate_gb: 2
+    notes: Sleeper — MTEB avg 69.01 at 0.6B params.
+
+  # ───────── Round 2 candidates (added 2026-05-16) ─────────
+
+  - id: qwen3-embedding-4b-fp16
+    server: hf-local
+    hf_repo: Qwen/Qwen3-Embedding-4B
+    dim: 2560
+    max_ctx_tokens: 32768
+    precision: fp16
+    vram_estimate_gb: 8
+    notes: >-
+      Right-sizer between 0.6B and 8B. MTEB 69.45 vs 8B's 70.58 — nearly
+      identical at half the VRAM.
+
+  - id: jina-v5-text-small
+    server: hf-local
+    hf_repo: jinaai/jina-embeddings-v5-text-small
+    dim: 1024
+    max_ctx_tokens: 32768
+    precision: fp16
+    vram_estimate_gb: 3
+    notes: >-
+      Jina's small text-only v5. MTEB 67.0 at 0.44B params. Same dim as
+      harrier so dim-penalty parity.
+
+  - id: qwen3-embedding-8b-q8-ollama
+    server: ollama-local
+    ollama_model: qwen3-embedding:8b-q8_0
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: q8_gguf
+    quantization: llama_cpp_q8
+    vram_estimate_gb: 9
+    notes: >-
+      GGUF Q8_0 via Ollama — different code path than bitsandbytes (which is
+      broken on this RTX 4090). Recovers the INT8-class 8B candidate.
+
+  - id: qwen3-embedding-8b-q8-turbo
+    server: turboquant-local
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-turbo
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: q8_gguf
+    quantization: llama_cpp_q8_turboquant
+    vram_estimate_gb: 9
+    notes: >-
+      Official Qwen3-Embedding-8B Q8_0 GGUF served by the TurboQuant
+      llama.cpp Windows CUDA build.
+
+  - id: qwen3-embedding-8b-q8-tq-turbo3
+    server: turboquant-local
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-tq-turbo3
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: q8_gguf
+    quantization: llama_cpp_q8_turboquant_turbo3_turbo3
+    vram_estimate_gb: 9
+    notes: >-
+      TurboQuant matrix config A; symmetric turbo3 K/V for maximum KV
+      compression.
+
+  - id: qwen3-embedding-8b-q8-tq-turbo4
+    server: turboquant-local
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-tq-turbo4
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: q8_gguf
+    quantization: llama_cpp_q8_turboquant_turbo4_turbo4
+    vram_estimate_gb: 10
+    notes: >-
+      TurboQuant matrix config B; symmetric turbo4 K/V for better quality at
+      lower compression.
+
+  - id: qwen3-embedding-8b-q8-tq-q8-turbo4
+    server: turboquant-local
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-tq-q8-turbo4
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: q8_gguf
+    quantization: llama_cpp_q8_turboquant_q8_0_turbo4
+    vram_estimate_gb: 11
+    notes: >-
+      TurboQuant matrix config C; q8_0 K with turbo4 V for accuracy-safe V
+      compression.
+
+  - id: qwen3-embedding-8b-q8-tq-q8-q8
+    server: turboquant-local
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-tq-q8-q8
+    dim: 4096
+    max_ctx_tokens: 8192
+    precision: q8_gguf
+    quantization: llama_cpp_q8_q8_0_q8_0
+    vram_estimate_gb: 12
+    notes: >-
+      llama.cpp q8_0 K/V baseline served by the TurboQuant build with no
+      turbo cache compression.
+
+  - id: qwen3-embedding-8b-fp8-vllm
+    server: vllm-docker
+    hf_repo: maywell/Qwen3-Embedding-8B-FP8-Dynamic
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: fp8_dynamic
+    quantization: compressed_tensors
+    vram_estimate_gb: 9
+    notes: >-
+      maywell's FP8-Dynamic. compressed-tensors format, native vLLM support.
+      Real INT8-class precision without the bnb kernel bug.
+
+  - id: qwen3-embedding-8b-fp8-vllm-docker-8k
+    server: vllm-docker
+    hf_repo: maywell/Qwen3-Embedding-8B-FP8-Dynamic
+    dim: 4096
+    max_ctx_tokens: 8192
+    precision: fp8_dynamic
+    quantization: compressed_tensors
+    vram_estimate_gb: 9
+    notes: >-
+      Docker Desktop / WSL2 vLLM OpenAI server rerun for the 8K
+      apples-to-apples query-speed comparison against the existing FP8
+      LanceDB index.
+
+  - id: qwen3-embedding-4b-fp8-vllm
+    server: vllm-docker
+    hf_repo: chroma-core/Qwen3-Embedding-4B-FP8-Dynamic
+    dim: 2560
+    max_ctx_tokens: 32768
+    precision: fp8_dynamic
+    quantization: compressed_tensors
+    vram_estimate_gb: 5
+    notes: >-
+      chroma-core's FP8-Dynamic of the 4B embedding model (added 2026-05-17).
+      compressed-tensors F8_E4M3, native vLLM. Right-sizer candidate against
+      8B-fp8 — half the VRAM and 2560d vectors vs 4096d.
+
+  - id: nv-embed-v2-fp16
+    server: hf-local
+    hf_repo: nvidia/NV-Embed-v2
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: fp16
+    vram_estimate_gb: 16
+    notes: >-
+      NVIDIA NV-Embed-v2. 7.85B params on Mistral-7B base with bidirectional
+      attention. MTEB ~73 (vs Gemini 68.4) — only open-source candidate that
+      convincingly beats Gemini on benchmarks. Requires trust_remote_code.
+
+# Production baseline reference (Gemini's dim is the target dim)
+baseline_dim: 3072
