@@ -102,3 +102,23 @@ The draft token buffer slots consumed the entire batch budget (256 seqs × 15 to
 - Baseline: `reports/raw/2026-05-23_qwen3.5-9b-fp8-vllm_speed.json`
 - MTP: `reports/raw/2026-05-23_qwen3.5-9b-fp8-vllm-mtp_speed.json`
 - DFlash: killed before writing output; server metrics captured above
+
+## SGLang Findings (added during benchmark run)
+
+### SGLang Baseline — Works, comparable to vLLM
+
+| Concurrency | tok/s | lat p50 | ttft p50 | VRAM |
+|---|---|---|---|---|
+| 1 | 57.2 | 8.73s | 63ms | 22,222 MB |
+| 4 | 253.3 | 7.69s | 65ms | 22,226 MB |
+| 16 | 813.2 | 9.18s | 127ms | 22,226 MB |
+
+### SGLang MTP (NEXTN) — Crashes
+
+`--speculative-algorithm NEXTN` with Qwen3.5 FP8 crashes in SGLang 0.5.12.post1. Error: `AssertionError` in `_handle_speculative_decoding` — requires `speculative_eagle_topk`. Even with `--speculative-eagle-topk 1 --speculative-num-steps 3`, the NEXTN→EAGLE mapping fails with `sigquit from child process`. Likely incompatible with Qwen3.5's conditional generation architecture in this SGLang version.
+
+### SGLang DFlash — OOM on 24GB
+
+`--speculative-algorithm DFLASH --speculative-draft-model-path z-lab/Qwen3.5-9B-DFlash` fails with `RuntimeError: Not enough memory` at all memory fractions tested (0.75, 0.80, 0.88). The 9B FP8 model (~10GB) + 1B DFlash drafter (~2GB) + CUDA graphs + KV cache exceeds 24GB. vLLM succeeded because it uses more aggressive memory pre-allocation and smaller CUDA graph footprint.
+
+Context reduction to 8192 tokens didn't help — the models themselves don't fit with enough headroom for KV cache.
