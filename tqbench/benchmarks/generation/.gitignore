@@ -1,0 +1,7 @@
+# Generated output
+reports/raw/
+reports/*.html
+data/prompts_short.jsonl
+data/prompts_medium.jsonl
+data/prompts_long.jsonl
+data/prompts_longctx.jsonl
