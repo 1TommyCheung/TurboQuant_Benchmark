@@ -119,12 +119,19 @@ async def run_concurrency_level(
     host: str, model: str, prompts: list[dict], concurrency: int,
 ) -> tuple[list[dict], float]:
     sem = asyncio.Semaphore(concurrency)
+    done_count = 0
+    total = len(prompts)
     limits = httpx.Limits(max_connections=concurrency + 4, max_keepalive_connections=concurrency)
     async with httpx.AsyncClient(base_url=host, timeout=300, limits=limits) as client:
 
         async def _bounded(prompt: dict) -> dict:
+            nonlocal done_count
             async with sem:
-                return await _stream_one(client, model, prompt)
+                result = await _stream_one(client, model, prompt)
+                done_count += 1
+                if done_count % 10 == 0 or done_count == total:
+                    log.info(f"  [{done_count}/{total}] lat={result['total_time_s']:.2f}s tok={result['completion_tokens']}")
+                return result
 
         t0 = time.perf_counter()
         tasks = [asyncio.create_task(_bounded(p)) for p in prompts]
