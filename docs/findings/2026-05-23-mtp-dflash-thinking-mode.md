@@ -128,3 +128,11 @@ Context reduction to 8192 tokens didn't help — the models themselves don't fit
 The FP8 model contains 13 MTP tensors (`mtp.layers.0.*`). The SGLang NEXTN crash is a **SGLang bug in the NEXTN→EAGLE mapping**, not missing weights. vLLM successfully uses these same MTP tensors with `qwen3_next_mtp`.
 
 The DFlash OOM on SGLang is a memory management issue (`--cuda-graph-max-bs` too high), fixable with `--cuda-graph-max-bs 2 --mem-fraction-static 0.5 --max-running-requests 4`.
+
+### SGLang MTP — Confirmed broken in 0.5.12.post1
+
+Workaround `--speculative-draft-model-path lovedheart/Qwen3.5-9B-FP8` (pointing to same model) fails with OOM — SGLang loads the "draft" model as a SEPARATE copy (~10GB × 2 = 20GB, exceeding 24GB). The auto-detect fix in PR #23859 is needed to tell SGLang to reuse the MTP heads from the already-loaded target model. Until that PR is merged, SGLang MTP for Qwen3.5 is unusable on 24GB GPUs.
+
+SGLang DFlash OOM is the same root cause — aggressive CUDA graph pre-allocation. Even with `--cuda-graph-max-bs 2 --mem-fraction-static 0.5`, the 9B model + 1B drafter + graph buffers exceeds 24GB in SGLang's memory model.
+
+**Verdict: SGLang speculative decoding (both MTP and DFlash) is not viable for Qwen3.5-9B on 24GB in v0.5.12.** Only baseline mode works.
