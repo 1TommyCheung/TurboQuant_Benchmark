@@ -20,7 +20,7 @@ def test_every_candidate_has_server_and_model_name():
 def test_get_candidate_by_id():
     spec = get_candidate("qwen3.5-9b-fp8-vllm")
     assert spec.server == "vllm-docker"
-    assert spec.model_name == "Qwen/Qwen3.5-9B-FP8"
+    assert spec.model_name == "lovedheart/Qwen3.5-9B-FP8"
     assert spec.spec_decode is None
     assert spec.quality_group == "fp8"
 

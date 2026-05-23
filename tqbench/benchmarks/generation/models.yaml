@@ -2,16 +2,16 @@ candidates:
   # ── vLLM configs ──
   - id: qwen3.5-9b-fp8-vllm
     server: vllm-docker
-    model_name: Qwen/Qwen3.5-9B-FP8
-    hf_repo: Qwen/Qwen3.5-9B-FP8
+    model_name: lovedheart/Qwen3.5-9B-FP8
+    hf_repo: lovedheart/Qwen3.5-9B-FP8
     max_tokens: 4096
     quality_group: fp8
     notes: vLLM baseline, no speculative decoding.
 
   - id: qwen3.5-9b-fp8-vllm-mtp
     server: vllm-docker
-    model_name: Qwen/Qwen3.5-9B-FP8
-    hf_repo: Qwen/Qwen3.5-9B-FP8
+    model_name: lovedheart/Qwen3.5-9B-FP8
+    hf_repo: lovedheart/Qwen3.5-9B-FP8
     max_tokens: 4096
     spec_decode: mtp
     quality_group: fp8
@@ -19,8 +19,8 @@ candidates:
 
   - id: qwen3.5-9b-fp8-vllm-dflash
     server: vllm-docker
-    model_name: Qwen/Qwen3.5-9B-FP8
-    hf_repo: Qwen/Qwen3.5-9B-FP8
+    model_name: lovedheart/Qwen3.5-9B-FP8
+    hf_repo: lovedheart/Qwen3.5-9B-FP8
     max_tokens: 4096
     spec_decode: dflash
     drafter_repo: z-lab/Qwen3.5-9B-DFlash
@@ -30,16 +30,16 @@ candidates:
   # ── SGLang configs ──
   - id: qwen3.5-9b-fp8-sglang
     server: sglang-local
-    model_name: Qwen/Qwen3.5-9B-FP8
-    hf_repo: Qwen/Qwen3.5-9B-FP8
+    model_name: lovedheart/Qwen3.5-9B-FP8
+    hf_repo: lovedheart/Qwen3.5-9B-FP8
     max_tokens: 4096
     quality_group: fp8
     notes: SGLang baseline, no speculative decoding.
 
   - id: qwen3.5-9b-fp8-sglang-mtp
     server: sglang-local
-    model_name: Qwen/Qwen3.5-9B-FP8
-    hf_repo: Qwen/Qwen3.5-9B-FP8
+    model_name: lovedheart/Qwen3.5-9B-FP8
+    hf_repo: lovedheart/Qwen3.5-9B-FP8
     max_tokens: 4096
     spec_decode: mtp
     quality_group: fp8
@@ -47,8 +47,8 @@ candidates:
 
   - id: qwen3.5-9b-fp8-sglang-dflash
     server: sglang-local
-    model_name: Qwen/Qwen3.5-9B-FP8
-    hf_repo: Qwen/Qwen3.5-9B-FP8
+    model_name: lovedheart/Qwen3.5-9B-FP8
+    hf_repo: lovedheart/Qwen3.5-9B-FP8
     max_tokens: 4096
     spec_decode: dflash
     drafter_repo: z-lab/Qwen3.5-9B-DFlash
