@@ -122,3 +122,9 @@ The draft token buffer slots consumed the entire batch budget (256 seqs × 15 to
 `--speculative-algorithm DFLASH --speculative-draft-model-path z-lab/Qwen3.5-9B-DFlash` fails with `RuntimeError: Not enough memory` at all memory fractions tested (0.75, 0.80, 0.88). The 9B FP8 model (~10GB) + 1B DFlash drafter (~2GB) + CUDA graphs + KV cache exceeds 24GB. vLLM succeeded because it uses more aggressive memory pre-allocation and smaller CUDA graph footprint.
 
 Context reduction to 8192 tokens didn't help — the models themselves don't fit with enough headroom for KV cache.
+
+### Correction: lovedheart/Qwen3.5-9B-FP8 DOES have MTP heads
+
+The FP8 model contains 13 MTP tensors (`mtp.layers.0.*`). The SGLang NEXTN crash is a **SGLang bug in the NEXTN→EAGLE mapping**, not missing weights. vLLM successfully uses these same MTP tensors with `qwen3_next_mtp`.
+
+The DFlash OOM on SGLang is a memory management issue (`--cuda-graph-max-bs` too high), fixable with `--cuda-graph-max-bs 2 --mem-fraction-static 0.5 --max-running-requests 4`.
