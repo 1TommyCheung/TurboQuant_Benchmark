@@ -165,10 +165,12 @@ def main() -> None:
             for r in raw
         ]
         agg = aggregate_stream_results(stream_results, wall)
+        agg["peak_vram_mb"] = vram.mark()
         all_results[conc] = agg
         log.info(f"  throughput={agg['throughput_tok_s']:.1f} tok/s  "
                  f"ttft_p50={agg['ttft_median_s']*1000:.0f}ms  "
-                 f"itl_p50={agg['itl_median_ms']:.1f}ms")
+                 f"itl_p50={agg['itl_median_ms']:.1f}ms  "
+                 f"vram_peak={agg['peak_vram_mb']}MB")
 
     peak_vram_mb = vram.stop()
 

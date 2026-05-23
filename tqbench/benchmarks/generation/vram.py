@@ -11,11 +11,20 @@ class VRAMSampler:
         self.samples: list[int] = []
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+        self._mark_idx: int = 0
 
     def start(self) -> None:
         self._stop.clear()
+        self.samples.clear()
+        self._mark_idx = 0
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
+
+    def mark(self) -> int:
+        """Return peak VRAM (MB) since the last mark() or start(), then reset the window."""
+        window = self.samples[self._mark_idx:]
+        self._mark_idx = len(self.samples)
+        return max(window) if window else 0
 
     def stop(self) -> int:
         self._stop.set()
