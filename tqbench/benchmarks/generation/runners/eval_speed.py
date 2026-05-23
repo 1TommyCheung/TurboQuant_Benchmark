@@ -50,6 +50,7 @@ async def _stream_one(
     client: httpx.AsyncClient,
     model: str,
     prompt: dict,
+    enable_thinking: bool = False,
 ) -> dict:
     messages = prompt["messages"]
     max_tokens = prompt.get("max_tokens", 256)
@@ -62,10 +63,14 @@ async def _stream_one(
     prompt_tokens = 0
     completion_tokens = 0
 
+    payload = {"model": model, "messages": messages,
+               "max_tokens": max_tokens, "temperature": 0.0, "stream": True}
+    if not enable_thinking:
+        payload["chat_template_kwargs"] = {"enable_thinking": False}
+
     async with client.stream(
         "POST", "/v1/chat/completions",
-        json={"model": model, "messages": messages,
-              "max_tokens": max_tokens, "temperature": 0.0, "stream": True},
+        json=payload,
     ) as resp:
         resp.raise_for_status()
         async for line in resp.aiter_lines():

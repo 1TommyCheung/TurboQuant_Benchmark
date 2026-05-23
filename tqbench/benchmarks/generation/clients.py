@@ -34,8 +34,9 @@ def build_client(spec: ModelSpec) -> OpenAIGenerateClient:
 
 
 class OpenAIGenerateClient:
-    def __init__(self, spec: ModelSpec, server: dict):
+    def __init__(self, spec: ModelSpec, server: dict, enable_thinking: bool = False):
         self.model = spec.model_name
+        self.enable_thinking = enable_thinking
         host = server["host"]
         self.client = httpx.Client(base_url=host, timeout=300)
         r = self.client.get("/v1/models")
@@ -52,18 +53,25 @@ class OpenAIGenerateClient:
         except Exception:
             return False
 
+    def _base_payload(self, messages: list[dict], max_tokens: int,
+                      temperature: float, stream: bool) -> dict:
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stream": stream,
+        }
+        if not self.enable_thinking:
+            payload["chat_template_kwargs"] = {"enable_thinking": False}
+        return payload
+
     def generate(self, messages: list[dict], max_tokens: int = 256,
                  temperature: float = 0.0) -> GenerateResult:
         t0 = time.perf_counter()
         r = self.client.post(
             "/v1/chat/completions",
-            json={
-                "model": self.model,
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-                "stream": False,
-            },
+            json=self._base_payload(messages, max_tokens, temperature, stream=False),
         )
         r.raise_for_status()
         elapsed = time.perf_counter() - t0
@@ -91,13 +99,7 @@ class OpenAIGenerateClient:
         with self.client.stream(
             "POST",
             "/v1/chat/completions",
-            json={
-                "model": self.model,
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-                "stream": True,
-            },
+            json=self._base_payload(messages, max_tokens, temperature, stream=True),
         ) as resp:
             resp.raise_for_status()
             for line in resp.iter_lines():
