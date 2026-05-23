@@ -106,6 +106,7 @@ async def _stream_one(
     total = time.perf_counter() - t0
     return {
         "id": prompt["id"],
+        "prompt_preview": messages[-1]["content"][:100] if messages else "",
         "ttft_s": ttft,
         "itl_ms": itl_ms,
         "completion_tokens": completion_tokens or len(chunks),
@@ -182,6 +183,10 @@ def main() -> None:
         agg = aggregate_stream_results(stream_results, wall)
         agg["peak_vram_mb"] = vram.mark()
         agg["server_metrics"] = metrics.mark()
+        agg["response_samples"] = [
+            {"id": r["id"], "prompt": r.get("prompt_preview", ""), "response": r["text"][:500], "tokens": r["completion_tokens"]}
+            for r in raw[:10]
+        ]
         all_results[conc] = agg
         kv = agg["server_metrics"]
         log.info(f"  tok/s={agg['throughput_tok_s']:.1f}  req/s={agg['throughput_req_s']:.2f}  "
