@@ -20,7 +20,7 @@ import numpy as np
 from tqbench.config import get_server
 from tqbench.benchmarks.generation.models import get_candidate, load_registry
 from tqbench.benchmarks.generation.speed_metrics import aggregate_stream_results
-from tqbench.benchmarks.generation.vram import VRAMSampler
+from tqbench.benchmarks.generation.vram import VRAMSampler, ServerMetricsSampler
 
 BENCH_ROOT = Path(__file__).resolve().parents[1]
 DATA = BENCH_ROOT / "data"
@@ -149,6 +149,8 @@ def main() -> None:
 
     vram = VRAMSampler()
     vram.start()
+    metrics = ServerMetricsSampler(host)
+    metrics.start()
 
     all_results: dict[int, dict] = {}
     for conc in args.concurrency:
@@ -166,13 +168,17 @@ def main() -> None:
         ]
         agg = aggregate_stream_results(stream_results, wall)
         agg["peak_vram_mb"] = vram.mark()
+        agg["server_metrics"] = metrics.mark()
         all_results[conc] = agg
+        kv = agg["server_metrics"]
         log.info(f"  throughput={agg['throughput_tok_s']:.1f} tok/s  "
                  f"ttft_p50={agg['ttft_median_s']*1000:.0f}ms  "
                  f"itl_p50={agg['itl_median_ms']:.1f}ms  "
-                 f"vram_peak={agg['peak_vram_mb']}MB")
+                 f"vram_peak={agg['peak_vram_mb']}MB  "
+                 f"kv_cache={kv['kv_cache_usage_peak_pct']:.1f}%")
 
     peak_vram_mb = vram.stop()
+    metrics.stop()
 
     date = dt.date.today().isoformat()
     out = {
