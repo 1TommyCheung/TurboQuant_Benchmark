@@ -17,3 +17,15 @@ servers:
   hf-local:
     type: hf
     device: cuda
+
+  sglang-local:
+    type: sglang
+    host: http://127.0.0.1:30000
+
+  beellama-local:
+    type: llamacpp
+    host: http://127.0.0.1:8081
+
+  lucebox-local:
+    type: lucebox
+    host: http://127.0.0.1:8082
