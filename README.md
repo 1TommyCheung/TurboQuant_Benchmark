@@ -2,7 +2,7 @@
 
 Real-world inference benchmarks for **Qwen3.5-9B** on a single **RTX 4090 24GB** (WSL2), comparing TurboQuant KV variants, DFlash speculative decoding, PFlash speculative prefill, and three serving stacks (beellama, vLLM, Lucebox).
 
-The goal: find the deployment config that maximizes decode throughput while leaving enough VRAM for a coexisting multimedia stack (Whisper STT, Kokoro TTS, VAD, SoulX video generation).
+The goal: **optimize the LLM's memory footprint** so meaningful decode throughput fits in a small VRAM budget, leaving headroom for additional models running on the same GPU.
 
 ---
 
@@ -193,7 +193,7 @@ Recommended cadence: monthly check via `/schedule` cron.
 - **Driver:** NVIDIA 596.21 (CUDA 13.2)
 - **Kernel:** 6.6.87.2-microsoft-standard-WSL2
 
-Multi-workload coexistence target: Qwen3.5-9B (~10 GB) + Whisper large-v3 (~3 GB) + Kokoro TTS (~1.5 GB) + VAD (~0.5 GB) + SoulX video gen = ~17 GB total, fits in 24 GB with margin.
+**VRAM optimization goal:** keep Qwen3.5-9B inference under ~10 GB peak so the remaining ~14 GB on a 24 GB card is free for other models (additional LLMs, audio/vision/embedding models, or experimental workloads) to coexist without contention.
 
 ---
 
