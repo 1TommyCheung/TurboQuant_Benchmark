@@ -34,3 +34,33 @@ venv/
 Thumbs.db
 .vscode/
 .idea/
+*.swp
+
+# === Added 2026-05-25 (Session D prep) ===
+
+# Large model files (live in ~/models/, never in repo)
+*.gguf
+*.safetensors
+*.bin
+*.onnx
+
+# Local agent state
+.claude/
+
+# Weekend ephemeral artifacts (regenerable; don't commit)
+**/run_logs/
+**/raw/*.json
+
+# Docker artifact snapshots — Docker stack moved to beellama fork
+docs/deployment/docker/artifacts/
+docs/deployment/docker/_artifacts/
+
+# Local env / secrets
+.env
+.env.local
+*.local
+.envrc
+
+# Temporary
+TODO.local.md
+NOTES.local.md

@@ -117,16 +117,26 @@ def aggregate(per_query: list[dict], chunk_lookup: dict[str, dict]) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
+    ap.add_argument(
+        "--index-model",
+        help="model_id for the LanceDB corpus index; defaults to --model. "
+        "Use this to test cross-encoder geometry, e.g. TurboQuant queries against an Ollama-built index.",
+    )
+    ap.add_argument(
+        "--index-path",
+        help="explicit LanceDB root containing the index table. Useful for read-only cross-eval against an existing benchmark index.",
+    )
     ap.add_argument("--k", type=int, default=10)
     args = ap.parse_args()
 
     spec = get_candidate(args.model)
+    index_spec = get_candidate(args.index_model or args.model)
     embedder = load_embedder(spec.id)
 
     log.info("Loading bench LanceDB...")
-    path = bench_lancedb_path(spec.id)
+    path = Path(args.index_path) if args.index_path else bench_lancedb_path(index_spec.id)
     db = lancedb.connect(str(path.parent))
-    vec_tbl = db.open_table(spec.id)
+    vec_tbl = db.open_table(index_spec.id)
 
     log.info("Connecting to production DuckDB FTS (read-only)...")
     duckdb_con = duckdb.connect(str(PROD_DUCKDB), read_only=True)
@@ -150,10 +160,16 @@ def main() -> None:
 
     agg = aggregate(per_query, chunk_lookup)
 
-    out_path = REPORTS / f"{dt.date.today().isoformat()}_{spec.id}_quality.json"
+    if index_spec.id == spec.id:
+        out_name = f"{dt.date.today().isoformat()}_{spec.id}_quality.json"
+    else:
+        out_name = f"{dt.date.today().isoformat()}_{spec.id}_on_{index_spec.id}_quality.json"
+    out_path = REPORTS / out_name
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps({
         "model_id": spec.id,
+        "query_model_id": spec.id,
+        "index_model_id": index_spec.id,
         "n_queries": len(per_query),
         "per_query": per_query,
         "aggregate": agg,

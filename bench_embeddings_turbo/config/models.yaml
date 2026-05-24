@@ -12,7 +12,7 @@ candidates:
     kind: api
     provider: google
     dim: 3072
-    max_ctx_tokens: 8192
+    max_ctx_tokens: 32768
     precision: api
     notes: Gemini V2 — same dim as V1 (3072), 4x context window (8192 vs 2048). The big-context win versus V1 should help on long court docs that V1 truncated.
 
@@ -106,6 +106,54 @@ candidates:
     vram_estimate_gb: 9
     notes: Official Qwen3-Embedding-8B Q8_0 GGUF served by the TurboQuant llama.cpp Windows CUDA build.
 
+  - id: qwen3-embedding-8b-q8-tq-turbo3
+    kind: llamacpp
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-tq-turbo3
+    llamacpp_host: http://127.0.0.1:8080
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: q8_gguf
+    quantization: llama_cpp_q8_turboquant_turbo3_turbo3
+    vram_estimate_gb: 9
+    notes: TurboQuant matrix config A; symmetric turbo3 K/V for maximum KV compression.
+
+  - id: qwen3-embedding-8b-q8-tq-turbo4
+    kind: llamacpp
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-tq-turbo4
+    llamacpp_host: http://127.0.0.1:8080
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: q8_gguf
+    quantization: llama_cpp_q8_turboquant_turbo4_turbo4
+    vram_estimate_gb: 10
+    notes: TurboQuant matrix config B; symmetric turbo4 K/V for better quality at lower compression.
+
+  - id: qwen3-embedding-8b-q8-tq-q8-turbo4
+    kind: llamacpp
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-tq-q8-turbo4
+    llamacpp_host: http://127.0.0.1:8080
+    dim: 4096
+    max_ctx_tokens: 32768
+    precision: q8_gguf
+    quantization: llama_cpp_q8_turboquant_q8_0_turbo4
+    vram_estimate_gb: 11
+    notes: TurboQuant matrix config C; q8_0 K with turbo4 V for accuracy-safe V compression.
+
+  - id: qwen3-embedding-8b-q8-tq-q8-q8
+    kind: llamacpp
+    hf_repo: Qwen/Qwen3-Embedding-8B-GGUF
+    llamacpp_model: qwen3-embedding-8b-q8-tq-q8-q8
+    llamacpp_host: http://127.0.0.1:8080
+    dim: 4096
+    max_ctx_tokens: 8192
+    precision: q8_gguf
+    quantization: llama_cpp_q8_q8_0_q8_0
+    vram_estimate_gb: 12
+    notes: llama.cpp q8_0 K/V baseline served by the TurboQuant build with no turbo cache compression.
+
   - id: qwen3-embedding-8b-fp8-vllm
     kind: vllm
     hf_repo: maywell/Qwen3-Embedding-8B-FP8-Dynamic
@@ -115,6 +163,17 @@ candidates:
     quantization: compressed_tensors
     vram_estimate_gb: 9
     notes: maywell's FP8-Dynamic. compressed-tensors format, native vLLM support. Real INT8-class precision without the bnb kernel bug.
+
+  - id: qwen3-embedding-8b-fp8-vllm-docker-8k
+    kind: vllm
+    hf_repo: maywell/Qwen3-Embedding-8B-FP8-Dynamic
+    vllm_host: http://127.0.0.1:8800
+    dim: 4096
+    max_ctx_tokens: 8192
+    precision: fp8_dynamic
+    quantization: compressed_tensors
+    vram_estimate_gb: 9
+    notes: Docker Desktop / WSL2 vLLM OpenAI server rerun for the 8K apples-to-apples query-speed comparison against the existing FP8 LanceDB index.
 
   - id: qwen3-embedding-4b-fp8-vllm
     kind: vllm

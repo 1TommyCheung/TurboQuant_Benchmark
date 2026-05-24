@@ -206,7 +206,6 @@ class _VLLMEmbedder:
 
     def __init__(self, spec: ModelSpec):
         import httpx
-        from transformers import AutoTokenizer
         self.spec = spec
         # Bump connection pool to comfortably fit our 16 concurrent workers.
         limits = httpx.Limits(max_connections=64, max_keepalive_connections=32)
@@ -218,10 +217,17 @@ class _VLLMEmbedder:
                 f"vLLM /v1/models smoke failed (status {r.status_code}). "
                 f"Ensure `vllm serve {spec.hf_repo} --runner pooling --convert embed --port {spec.vllm_host.split(':')[-1]}` is running."
             )
-        # Local tokenizer for safe truncation BEFORE hitting the endpoint.
-        self.tokenizer = AutoTokenizer.from_pretrained(spec.hf_repo, trust_remote_code=True)
+        # Local tokenizer is only for client-side truncation. Keep it optional so
+        # the lean benchmark env can query an already-running vLLM server.
+        try:
+            from transformers import AutoTokenizer
+            self.tokenizer = AutoTokenizer.from_pretrained(spec.hf_repo, trust_remote_code=True)
+        except ModuleNotFoundError:
+            self.tokenizer = None
 
     def _truncate(self, text: str) -> str:
+        if self.tokenizer is None:
+            return text
         ids = self.tokenizer.encode(text, add_special_tokens=False)
         if len(ids) <= self.MAX_INPUT_TOKENS:
             return text

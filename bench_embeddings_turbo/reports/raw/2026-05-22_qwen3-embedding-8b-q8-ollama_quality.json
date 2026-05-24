@@ -1,5 +1,7 @@
 {
   "model_id": "qwen3-embedding-8b-q8-ollama",
+  "query_model_id": "qwen3-embedding-8b-q8-ollama",
+  "index_model_id": "qwen3-embedding-8b-q8-ollama",
   "n_queries": 893,
   "per_query": [
     {
@@ -4618,7 +4620,7 @@
         "vec_recall_100": 0.0,
         "vec_mrr_10": 0.0,
         "e2e_recall_10": 1.0,
-        "e2e_mrr_10": 0.25
+        "e2e_mrr_10": 0.16666666666666666
       },
       "source_chunk_id": "2bb39b06-068d-4d72-9a87-3aab1fce57b0"
     },
@@ -4724,9 +4726,9 @@
       "metrics": {
         "vec_recall_10": 1.0,
         "vec_recall_100": 1.0,
-        "vec_mrr_10": 0.25,
+        "vec_mrr_10": 0.2,
         "e2e_recall_10": 1.0,
-        "e2e_mrr_10": 1.0
+        "e2e_mrr_10": 0.5
       },
       "source_chunk_id": "0aeac1a8-f95a-408d-a995-140b40caa8ed"
     },
@@ -4966,7 +4968,7 @@
         "vec_recall_100": 0.0,
         "vec_mrr_10": 0.0,
         "e2e_recall_10": 1.0,
-        "e2e_mrr_10": 0.25
+        "e2e_mrr_10": 0.5
       },
       "source_chunk_id": "571327f0-9fcb-4648-b637-768aba31d108"
     },
@@ -5746,7 +5748,7 @@
         "vec_recall_100": 0.0,
         "vec_mrr_10": 0.0,
         "e2e_recall_10": 1.0,
-        "e2e_mrr_10": 0.25
+        "e2e_mrr_10": 0.3333333333333333
       },
       "source_chunk_id": "35e17e7b-c143-4288-888f-9410bf8c06c2"
     },
@@ -7762,7 +7764,7 @@
         "vec_recall_100": 0.0,
         "vec_mrr_10": 0.0,
         "e2e_recall_10": 1.0,
-        "e2e_mrr_10": 0.16666666666666666
+        "e2e_mrr_10": 0.25
       },
       "source_chunk_id": "e9246ed2-1b33-43ae-b77c-b88c85dfad32"
     },
@@ -8276,9 +8278,9 @@
       "metrics": {
         "vec_recall_10": 1.0,
         "vec_recall_100": 1.0,
-        "vec_mrr_10": 0.3333333333333333,
+        "vec_mrr_10": 0.5,
         "e2e_recall_10": 1.0,
-        "e2e_mrr_10": 0.16666666666666666
+        "e2e_mrr_10": 0.25
       },
       "source_chunk_id": "5360442f-5db1-4052-a944-f86a4648b6cf"
     },
@@ -9238,7 +9240,7 @@
         "vec_recall_100": 0.0,
         "vec_mrr_10": 0.0,
         "e2e_recall_10": 1.0,
-        "e2e_mrr_10": 0.16666666666666666
+        "e2e_mrr_10": 0.125
       },
       "source_chunk_id": "ff3345a2-4571-49c5-9c1f-8f167127e4b0"
     },
@@ -10722,9 +10724,9 @@
   "aggregate": {
     "overall_mean": {
       "vec_recall_10": 0.0425531914893617,
-      "vec_mrr_10": 0.03174825361275529,
+      "vec_mrr_10": 0.03187889937609982,
       "e2e_recall_10": 0.2956326987681971,
-      "e2e_mrr_10": 0.12780177393839207
+      "e2e_mrr_10": 0.12766179633480865
     },
     "by_source_type": {
       "whatsapp": 0.506578947368421,

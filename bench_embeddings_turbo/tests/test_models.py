@@ -4,11 +4,11 @@ import pytest
 from bench.models import load_registry, get_candidate, ModelSpec
 
 
-def test_registry_has_14_candidates():
+def test_registry_has_19_candidates():
     """Round 1 added 6 candidates; Round 2 (2026-05-16) added 4 more
     (Qwen3-4B FP16, Jina v5 small, Qwen3-8B Q8 via Ollama, Qwen3-8B FP8 via vLLM)."""
     reg = load_registry()
-    assert len(reg) == 14
+    assert len(reg) == 19
 
 
 def test_baseline_is_gemini():

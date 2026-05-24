@@ -1,0 +1,130 @@
+{
+  "rows": [
+    {
+      "id": "qwen3-embedding-8b-q8-ollama",
+      "label": "Ollama qwen3-embedding:8b-q8_0",
+      "cache": "Ollama default",
+      "server": "ollama",
+      "rows": 5000,
+      "embed_rate": 5.4,
+      "embed_seconds": 922.675,
+      "eval_seconds": 742.729,
+      "n_queries": 893,
+      "query_rate": 1.202322785295848,
+      "metrics": {
+        "vec_recall_10": 0.043673012318029114,
+        "vec_mrr_10": 0.03235482322828347,
+        "e2e_recall_10": 0.2967525195968645,
+        "e2e_mrr_10": 0.12812527773334043
+      },
+      "peak_embed_mib": 16186,
+      "peak_eval_mib": 15856,
+      "peak_mib": 16186,
+      "gpu_model_mib": null,
+      "kv_mib": null,
+      "compute_mib": null,
+      "host_compute_mib": null
+    },
+    {
+      "id": "qwen3-embedding-8b-q8-tq-turbo3",
+      "label": "TurboQuant turbo3/turbo3",
+      "cache": "K turbo3, V turbo3",
+      "server": "llama.cpp TurboQuant",
+      "rows": 5000,
+      "embed_rate": 4.9,
+      "embed_seconds": 1021.886,
+      "eval_seconds": 605.275,
+      "n_queries": 893,
+      "query_rate": 1.4753624385609847,
+      "metrics": {
+        "vec_recall_10": 0.03807390817469205,
+        "vec_mrr_10": 0.029530386249311216,
+        "e2e_recall_10": 0.2945128779395297,
+        "e2e_mrr_10": 0.12427300520805559
+      },
+      "peak_embed_mib": 24082,
+      "peak_eval_mib": 14964,
+      "peak_mib": 24082,
+      "gpu_model_mib": 7668.64,
+      "kv_mib": 900.13,
+      "compute_mib": 5891.72,
+      "host_compute_mib": 1280.22
+    },
+    {
+      "id": "qwen3-embedding-8b-q8-tq-turbo4",
+      "label": "TurboQuant turbo4/turbo4",
+      "cache": "K turbo4, V turbo4",
+      "server": "llama.cpp TurboQuant",
+      "rows": 5000,
+      "embed_rate": 5.4,
+      "embed_seconds": 930.329,
+      "eval_seconds": 599.76,
+      "n_queries": 893,
+      "query_rate": 1.4889289048952914,
+      "metrics": {
+        "vec_recall_10": 0.04143337066069429,
+        "vec_mrr_10": 0.03200954513944435,
+        "e2e_recall_10": 0.2945128779395297,
+        "e2e_mrr_10": 0.1279932988499618
+      },
+      "peak_embed_mib": 15288,
+      "peak_eval_mib": 15288,
+      "peak_mib": 15288,
+      "gpu_model_mib": 7668.64,
+      "kv_mib": 1224.13,
+      "compute_mib": 5891.72,
+      "host_compute_mib": 1280.22
+    },
+    {
+      "id": "qwen3-embedding-8b-q8-tq-q8-turbo4",
+      "label": "TurboQuant q8_0/turbo4",
+      "cache": "K q8_0, V turbo4",
+      "server": "llama.cpp TurboQuant",
+      "rows": 5000,
+      "embed_rate": 5.5,
+      "embed_seconds": 913.878,
+      "eval_seconds": 587.219,
+      "n_queries": 893,
+      "query_rate": 1.5207273606610139,
+      "metrics": {
+        "vec_recall_10": 0.04143337066069429,
+        "vec_mrr_10": 0.03364128406121687,
+        "e2e_recall_10": 0.2967525195968645,
+        "e2e_mrr_10": 0.1288935992463428
+      },
+      "peak_embed_mib": 15898,
+      "peak_eval_mib": 15898,
+      "peak_mib": 15898,
+      "gpu_model_mib": 7668.64,
+      "kv_mib": 1836.0,
+      "compute_mib": 5891.72,
+      "host_compute_mib": 1280.22
+    },
+    {
+      "id": "qwen3-embedding-8b-q8-tq-q8-q8",
+      "label": "llama.cpp q8_0/q8_0",
+      "cache": "K q8_0, V q8_0",
+      "server": "llama.cpp TurboQuant build",
+      "rows": 5000,
+      "embed_rate": 4.8,
+      "embed_seconds": 1035.589,
+      "eval_seconds": 746.549,
+      "n_queries": 893,
+      "query_rate": 1.1961706465349227,
+      "metrics": {
+        "vec_recall_10": 0.0425531914893617,
+        "vec_mrr_10": 0.03398656215005599,
+        "e2e_recall_10": 0.2967525195968645,
+        "e2e_mrr_10": 0.12894959028777617
+      },
+      "peak_embed_mib": 16510,
+      "peak_eval_mib": 16510,
+      "peak_mib": 16510,
+      "gpu_model_mib": 7668.64,
+      "kv_mib": 2448.0,
+      "compute_mib": 5891.72,
+      "host_compute_mib": 1280.22
+    }
+  ],
+  "report": "I:\\dev\\LLM\\TurboQuant_Benchmark\\bench_embeddings_turbo\\reports\\2026-05-22_qwen3_q8_turboquant_matrix.html"
+}

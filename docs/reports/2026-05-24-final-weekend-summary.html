@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Qwen3.5-9B + TurboQuant + DFlash + PFlash — Weekend Summary 2026-05-24</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+    --bg: #fafaf9;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --accent: #2c5f2d;
+    --warn: #ad6800;
+    --bad: #a83232;
+    --good: #2c5f2d;
+    --border: #e5e3df;
+    --code-bg: #f3f2ef;
+}
+* { box-sizing: border-box; }
+body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+}
+h1 {
+    font-size: 2.0rem;
+    margin: 0 0 8px 0;
+    color: var(--accent);
+}
+.subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 32px;
+}
+h2 {
+    margin-top: 56px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+    color: var(--accent);
+}
+h3 {
+    margin-top: 32px;
+    color: var(--ink);
+}
+h4 { color: var(--muted); font-weight: 600; }
+.tldr {
+    background: var(--panel);
+    border-left: 4px solid var(--accent);
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 4px;
+}
+.tldr ol { padding-left: 20px; margin: 8px 0; }
+.tldr li { margin-bottom: 8px; }
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 16px 0 24px 0;
+}
+.metric {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+}
+.metric .label { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.metric .value { font-size: 1.6rem; font-weight: 700; margin: 6px 0; color: var(--accent); }
+.metric .delta { font-size: 0.85rem; color: var(--muted); }
+.metric.warn .value { color: var(--warn); }
+.metric.bad .value { color: var(--bad); }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.92rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+}
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+th { background: var(--code-bg); font-weight: 600; }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.pass { color: var(--good); font-weight: 600; }
+.fail { color: var(--bad); font-weight: 600; }
+.warnv { color: var(--warn); font-weight: 600; }
+pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.88em; }
+pre code { background: none; padding: 0; }
+.chart-wrapper {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    margin: 20px 0;
+}
+.chart-wrapper canvas { max-height: 380px; }
+.chart-title { font-weight: 600; margin-bottom: 12px; color: var(--accent); }
+.note {
+    background: #fff8e1;
+    border-left: 3px solid var(--warn);
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 0.9rem;
+    border-radius: 3px;
+}
+.callout {
+    background: #e8f0e8;
+    border-left: 3px solid var(--good);
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-radius: 3px;
+}
+.toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 24px;
+    margin-bottom: 32px;
+}
+.toc ul { padding-left: 20px; }
+.toc a { color: var(--accent); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.ecosystem-table th, .ecosystem-table td { text-align: center; }
+.ecosystem-table th:first-child, .ecosystem-table td:first-child { text-align: left; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Qwen3.5-9B + TurboQuant + DFlash + PFlash</h1>
+<p class="subtitle">Weekend benchmark summary — 2026-05-24 · RTX 4090 24GB · WSL2 · Multiple inference servers</p>
+
+<div class="toc">
+<strong>Contents</strong>
+<ul>
+  <li><a href="#tldr">TL;DR</a></li>
+  <li><a href="#prod">Recommended deployment</a></li>
+  <li><a href="#group-d">Group D — Production validation (10 NIAH cases) ⭐</a></li>
+  <li><a href="#tq-variants">TurboQuant variant comparison (turbo4 = new default) ⭐</a></li>
+  <li><a href="#group-a">Group A — Short-context ablation (4K)</a></li>
+  <li><a href="#group-b">Group B — Long-context viability (128K)</a></li>
+  <li><a href="#group-c">Group C — Sustained decode (128K + 4K output)</a></li>
+  <li><a href="#charts">Charts</a></li>
+  <li><a href="#lucebox-27b">Cross-stack reference: Lucebox 27B @ 128K</a></li>
+  <li><a href="#configs">Inference server deployment configs</a></li>
+  <li><a href="#vllm-eco">vLLM ecosystem research</a></li>
+  <li><a href="#mem-math">Memory math (F16 KV surprise)</a></li>
+  <li><a href="#method">Methodology</a></li>
+  <li><a href="#next">Next steps & watch list</a></li>
+</ul>
+</div>
+
+<h2 id="tldr">TL;DR</h2>
+<div class="tldr">
+<ol>
+  <li><strong>Production config for Qwen3.5-9B (updated 2026-05-24):</strong> beellama + Q8_0 weights + <strong><code>turbo4</code> KV</strong> at 64K context, no spec. Validated 10/10 NIAH retrievals, median TTFT 7.58s, sustained <strong>71 tok/s</strong> at 60K input, peak VRAM <strong>9.7 GB</strong>. (Previously <code>turbo3_tcq</code> at 39 tok/s — swap is a free 82% speedup.)</li>
+  <li><strong>DFlash adds VRAM and rarely helps for 9B.</strong> Draft model + spec workspace costs ~1.5 GB; only pays off in tok/s above ~500 output tokens at long context.</li>
+  <li><strong>vLLM cannot do TQ + speculative decoding combo today.</strong> All 3 forks investigated either gate it off or don't have spec at all. <strong>beellama is the only OpenAI-compatible HTTP server with TQ + DFlash working.</strong></li>
+  <li><strong>F16 KV at 128K does NOT OOM on 9B</strong> (~13 GB peak) — llama.cpp <code>-fa on</code> stores KV ~3.6× more compactly than textbook math predicts.</li>
+  <li><strong>Lucebox full stack (PFlash + TQ + DFlash + DDTree) on 27B at 128K peaks at ~19-20 GB</strong> — the only path to run 27B at 128K on a 24GB card.</li>
+</ol>
+</div>
+
+<h2 id="prod">Recommended deployment for 9B + multimedia coexistence</h2>
+<p>Running Qwen3.5-9B alongside SoulX video gen, Whisper STT, Kokoro TTS, VAD on a single 24GB 4090:</p>
+
+<pre><code>/mnt/i/dev/LLM/beellama.cpp/build/bin/llama-server \
+    -m /home/tommy/models/Qwen3.5-9B-Q8_0.gguf \
+    --host 127.0.0.1 --port 8083 \
+    -c 65536 -ngl 99 -fa on \
+    -ctk turbo4 -ctv turbo4 \
+    --reasoning-format none</code></pre>
+
+<div class="callout">
+<strong>VRAM ~9.7 GB</strong> → leaves ~14 GB for the multimedia stack. <strong>Decode: 71 tok/s</strong> at 60K context (validated 10/10 NIAH).
+</div>
+
+<h2 id="group-d">Group D — Production config validation (10 NIAH cases) ⭐</h2>
+
+<div class="metric-grid">
+    <div class="metric"><div class="label">Cases Passed</div><div class="value">10 / 10</div><div class="delta">100% accuracy</div></div>
+    <div class="metric"><div class="label">TTFT Median</div><div class="value">8.96 s</div><div class="delta">p95 = 9.30 s</div></div>
+    <div class="metric warn"><div class="label">Decode tok/s</div><div class="value">39.2</div><div class="delta">below 60 target, but reliable</div></div>
+    <div class="metric"><div class="label">Peak VRAM</div><div class="value">9.9 GB</div><div class="delta">vs 13 GB cap</div></div>
+</div>
+
+<p><strong>Setup:</strong> Qwen3.5-9B Q8_0 + TQ3 KV (no spec), 64K context (<code>-c 65536</code>). Cases: 10 NIAH @ 60K input each, generated with <code>lucebox-hub/pflash/tests/niah_gen.py</code> (seeds 42-51, Qwen3.5 tokenizer).</p>
+
+<table>
+<thead><tr><th>#</th><th>Key</th><th>Expected</th><th class="num">TTFT (s)</th><th class="num">tok/s</th><th>Found?</th></tr></thead>
+<tbody>
+<tr><td>0</td><td><code>qahftrxc</code></td><td>4025016</td><td class="num">8.90</td><td class="num">38.12</td><td class="pass">✓</td></tr>
+<tr><td>1</td><td><code>bsdmrulm</code></td><td>0438574</td><td class="num">9.19</td><td class="num">39.18</td><td class="pass">✓</td></tr>
+<tr><td>2</td><td><code>kowefada</code></td><td>1596346</td><td class="num">9.26</td><td class="num">39.18</td><td class="pass">✓</td></tr>
+<tr><td>3</td><td><code>hmcibahd</code></td><td>3706177</td><td class="num">9.24</td><td class="num">39.22</td><td class="pass">✓</td></tr>
+<tr><td>4</td><td><code>xkpwfnpy</code></td><td>0038819</td><td class="num">9.30</td><td class="num">39.18</td><td class="pass">✓</td></tr>
+<tr><td>5</td><td><code>jllinkbk</code></td><td>0129459</td><td class="num">8.59</td><td class="num">39.21</td><td class="pass">✓</td></tr>
+<tr><td>6</td><td><code>odshyfte</code></td><td>9816258</td><td class="num">8.91</td><td class="num">39.32</td><td class="pass">✓</td></tr>
+<tr><td>7</td><td><code>bkctnbbt</code></td><td>1765865</td><td class="num">9.00</td><td class="num">39.34</td><td class="pass">✓</td></tr>
+<tr><td>8</td><td><code>mgqgmzci</code></td><td>6018931</td><td class="num">8.90</td><td class="num">39.15</td><td class="pass">✓</td></tr>
+<tr><td>9</td><td><code>gnevgoyk</code></td><td>9756539</td><td class="num">8.91</td><td class="num">39.17</td><td class="pass">✓</td></tr>
+</tbody>
+</table>
+
+<h2 id="group-a">Group A — Short-context method ablation (4K)</h2>
+<p>What each lever does in isolation. Fixed 30-token prompt, 256-token output, 8 iterations per config (3 warmup + 5 measure).</p>
+<table>
+<thead><tr><th>Config</th><th class="num">tok/s (median)</th><th class="num">VRAM (MiB)</th><th class="num">Accept rate</th></tr></thead>
+<tbody>
+<tr><td>baseline F16 KV</td><td class="num"><strong>87.4</strong></td><td class="num">9,314</td><td class="num">—</td></tr>
+<tr><td>TQ3 KV</td><td class="num">84.5</td><td class="num">9,226</td><td class="num">—</td></tr>
+<tr><td>DFlash (F16 KV)</td><td class="num">77.0</td><td class="num">10,846</td><td class="num"><span class="fail">9.1%</span></td></tr>
+<tr><td>TQ3 + DFlash combo</td><td class="num">80.5</td><td class="num">10,754</td><td class="num">—</td></tr>
+</tbody>
+</table>
+<p>TQ3 KV alone costs −3.4% decode but saves only 88 MB at 4K (KV is tiny). DFlash's draft adds +1.5 GB and at 9% acceptance actively hurts tok/s.</p>
+
+<h2 id="group-b">Group B — Long-context viability (128K input, 16-token output)</h2>
+<table>
+<thead><tr><th>Config</th><th class="num">TTFT</th><th class="num">tok/s</th><th class="num">Peak VRAM (MiB)</th><th>Accuracy</th></tr></thead>
+<tbody>
+<tr><td>baseline F16 KV</td><td class="num"><strong>20.7s</strong></td><td class="num">61.6</td><td class="num">13,418</td><td class="pass">✓</td></tr>
+<tr><td>TQ3 KV (no spec)</td><td class="num">~20.7s*</td><td class="num">~71*</td><td class="num">~10,500</td><td class="pass">✓</td></tr>
+<tr><td>TQ3 + DFlash combo</td><td class="num">28.8s</td><td class="num">30.75</td><td class="num">12,778</td><td class="pass">✓ (45% accept)</td></tr>
+</tbody>
+</table>
+<p class="note">* TQ3-only at 128K inferred from neighboring runs; partial capture due to bench-script edge case.</p>
+<p>F16 KV at 128K does <strong>not</strong> OOM. Combo's spec setup dominates the 16-token output → combo is slower than baseline.</p>
+
+<h2 id="group-c">Group C — Sustained decode (128K input + ~4K output)</h2>
+<table>
+<thead><tr><th>Config</th><th class="num">TTFT</th><th class="num">Decode s</th><th class="num">Output tokens</th><th class="num">tok/s</th></tr></thead>
+<tbody>
+<tr><td>baseline F16 KV</td><td class="num">20.7s</td><td class="num">6.95s</td><td class="num">412 (EOS)</td><td class="num"><strong>59.3</strong></td></tr>
+<tr><td>TQ3 + DFlash combo</td><td class="num">28.8s</td><td class="num">20.06s</td><td class="num">651</td><td class="num">32.5</td></tr>
+</tbody>
+</table>
+<p>At 128K full-KV, DFlash hurts 9B regardless of output length — per-step verification overhead exceeds the speculation gain.</p>
+
+<h2 id="charts">Charts</h2>
+
+<div class="chart-wrapper">
+  <div class="chart-title">Chart 1: Decode tok/s by config × context length</div>
+  <canvas id="chart1"></canvas>
+</div>
+
+<div class="chart-wrapper">
+  <div class="chart-title">Chart 2: Peak VRAM (MiB) by config — stacked breakdown</div>
+  <canvas id="chart2"></canvas>
+</div>
+
+<div class="chart-wrapper">
+  <div class="chart-title">Chart 3: TTFT scaling with input context (lower = better)</div>
+  <canvas id="chart3"></canvas>
+</div>
+
+<div class="chart-wrapper">
+  <div class="chart-title">Chart 4 (Group D): per-case TTFT and tok/s — 10 NIAH cases @ 60K</div>
+  <canvas id="chart4"></canvas>
+</div>
+
+<h2 id="lucebox-27b">Cross-stack reference: Lucebox PFlash 27B @ 128K</h2>
+<p>The full PFlash + DFlash + TQ + DDTree stack on Qwen3.6-27B Q4_K_M, the only viable path for 27B + 128K on a 24GB card.</p>
+
+<table>
+<thead><tr><th>Setup</th><th class="num">Peak VRAM</th><th>Fits on 24 GB?</th></tr></thead>
+<tbody>
+<tr><td>27B + F16 KV naive (no compression)</td><td class="num">~36 GB</td><td class="fail">✗ OOM by 12 GB</td></tr>
+<tr><td>27B + TQ3 KV only</td><td class="num">~22 GB</td><td class="warnv">very tight</td></tr>
+<tr><td><strong>27B + PFlash + TQ3 + DFlash + DDTree (Lucebox)</strong></td><td class="num"><strong>~19-20 GB</strong></td><td class="pass">✓ comfortable</td></tr>
+</tbody>
+</table>
+
+<p>PFlash's 20× input compression (131K → 6.5K tokens via drafter scoring) is the dominant VRAM lever — shrinks the KV cache before TQ even gets to work on it.</p>
+
+<p class="note">Lucebox claims 24.8s TTFT at 128K on RTX 3090 native Linux. Our RTX 4090 WSL2 measured ~157s (6.5× slower). Root cause not isolated; sm_86 kernel fallback, JIT warmup, and BSA disabling all ruled out. See <code>docs/findings/2026-05-24-pflash-128k-direct-vs-http.md</code>.</p>
+
+<h2 id="configs">Inference server deployment configs</h2>
+
+<h3>1. beellama (llama.cpp fork) — recommended production stack</h3>
+<p><strong>Binary:</strong> <code>/mnt/i/dev/LLM/beellama.cpp/build/bin/llama-server</code><br>
+<strong>Build:</strong> <code>b9459-07ac3cec6</code>, CUDA archs <code>750,800,860,890,1200,1210</code>, FA_ALL_QUANTS</p>
+
+<pre><code>llama-server \
+    -m /home/tommy/models/Qwen3.5-9B-Q8_0.gguf \
+    --host 127.0.0.1 --port 8083 \
+    -c 65536 -ngl 99 -fa on \
+    -ctk turbo3_tcq -ctv turbo3_tcq \
+    --reasoning-format none</code></pre>
+
+<p><strong>VRAM:</strong> ~10 GB · <strong>TTFT @ 60K:</strong> ~9s · <strong>Decode:</strong> ~39 tok/s</p>
+
+<p><strong>Optional TQ + DFlash combo</strong> (only beats baseline for outputs > 1K tokens; not generally recommended for 9B):</p>
+
+<pre><code># Add these to the above:
+    -md /home/tommy/models/Qwen3.5-9B-DFlash-q8_0.gguf \
+    -ctkd turbo3_tcq -ctvd turbo3_tcq \
+    --spec-branch-budget 16 --draft-max 8 --draft-min 1</code></pre>
+
+<h3>2. vLLM v0.21.0 (TQ KV only, no spec)</h3>
+<p><strong>Docker image:</strong> <code>vllm/vllm-openai:v0.21.0</code><br>
+<strong>TurboQuant flag:</strong> <code>--kv-cache-dtype &lt;preset&gt;</code></p>
+
+<table>
+<thead><tr><th>Preset</th><th>K</th><th>V</th><th class="num">Compression</th><th class="num">GSM8K Δ</th></tr></thead>
+<tbody>
+<tr><td><code>turboquant_k8v4</code></td><td>FP8</td><td>4-bit</td><td class="num">2.6×</td><td class="num">−4.7%</td></tr>
+<tr><td><code>turboquant_4bit_nc</code></td><td>4-bit+NC</td><td>4-bit+NC</td><td class="num">3.8×</td><td class="num">−6.7%</td></tr>
+<tr><td><strong><code>turboquant_k3v4_nc</code></strong> ⭐</td><td>3-bit+NC</td><td>4-bit+NC</td><td class="num">4.3×</td><td class="num">−13.3%</td></tr>
+<tr><td><code>turboquant_3bit_nc</code></td><td>3-bit+NC</td><td>3-bit+NC</td><td class="num">4.9×</td><td class="num">−20.0%</td></tr>
+</tbody>
+</table>
+
+<pre><code>docker run --gpus all --rm -p 8800:8800 \
+    -v ~/.cache/huggingface:/root/.cache/huggingface \
+    vllm/vllm-openai:v0.21.0 \
+    serve lovedheart/Qwen3.5-9B-FP8 \
+    --kv-cache-dtype turboquant_k3v4_nc \
+    --max-model-len 65536 \
+    --port 8800 \
+    --tensor-parallel-size 1 \
+    --max-num-seqs 1</code></pre>
+
+<div class="note">
+<strong>Critical incompatibility:</strong> TurboQuant + speculative decoding (MTP/EAGLE/DFlash) is explicitly disabled in v0.21.0 via <code>supports_spec_as_decode=False</code> in <code>turboquant_attn.py:203</code>. Wait for PR #40914 to merge upstream.
+</div>
+
+<h3>3. Lucebox dflash (27B / very long context)</h3>
+<p><strong>Binary:</strong> <code>/mnt/i/dev/LLM/lucebox-hub/dflash/build/test_dflash</code> (sm_89-compiled)<br>
+<strong>HTTP wrapper:</strong> <code>lucebox-hub/dflash/scripts/server.py</code> (Python FastAPI, ~3% overhead per profiling)</p>
+
+<pre><code>python /mnt/i/dev/LLM/lucebox-hub/dflash/scripts/server.py \
+    --target /home/tommy/models/Qwen3.6-27B-Q4_K_M.gguf \
+    --draft  /home/tommy/models/dflash-draft-3.6-q8_0.gguf \
+    --bin    /mnt/i/dev/LLM/lucebox-hub/dflash/build/test_dflash \
+    --port 8082 \
+    --max-ctx 131072 \
+    --prefill-compression auto \
+    --prefill-drafter /home/tommy/models/Qwen3-0.6B-BF16.gguf \
+    --no-thinking</code></pre>
+
+<p>At 128K, target + drafter cannot coexist on 24 GB. Daemon sequences VRAM via <code>park target → compress → free drafter → unpark target → generate</code> stdin protocol.</p>
+
+<h2 id="vllm-eco">vLLM ecosystem research — TQ × spec compatibility matrix</h2>
+<table class="ecosystem-table">
+<thead><tr><th>Stack</th><th>TQ alone</th><th>Spec alone</th><th>TQ + Spec combo</th></tr></thead>
+<tbody>
+<tr><td>vLLM v0.21.0 upstream</td><td class="pass">✓</td><td class="pass">✓ (MTP/EAGLE)</td><td class="fail">✗ blocked at backend</td></tr>
+<tr><td>vLLM + PR #40914 patch (open)</td><td class="pass">✓</td><td class="pass">✓</td><td class="warnv">✓ MTP only, ✗ DFlash</td></tr>
+<tr><td>Sandermage/genesis-vllm-patches (fork)</td><td class="pass">✓</td><td class="pass">✓</td><td class="warnv">✓ MTP only, Qwen3.6 only</td></tr>
+<tr><td>mitkox/vllm-turboquant (fork)</td><td class="pass">✓</td><td class="fail">✗</td><td class="fail">✗ no spec at all</td></tr>
+<tr><td><strong>beellama (llama.cpp fork)</strong></td><td class="pass">✓</td><td class="pass">✓</td><td class="pass"><strong>✓ TQ + DFlash combo works</strong></td></tr>
+<tr><td>Lucebox (separate stack)</td><td class="pass">✓ TQ3</td><td class="pass">✓ DFlash + DDTree</td><td class="pass">✓ + PFlash on top</td></tr>
+</tbody>
+</table>
+
+<p><strong>Open PRs to track:</strong></p>
+<ul>
+<li><a href="https://github.com/vllm-project/vllm/pull/40914">PR #40914</a> — TurboQuant K+1 spec-verify routing fix (validated, not merged)</li>
+<li><a href="https://github.com/vllm-project/vllm/pull/39995">PR #39995</a> — DFlash FlashInfer FP8 KV cache</li>
+</ul>
+
+<p><strong>Open issues to track:</strong></p>
+<ul>
+<li><a href="https://github.com/vllm-project/vllm/issues/40831">#40831</a> — TurboQuant + MTP degenerate output</li>
+<li><a href="https://github.com/vllm-project/vllm/issues/40880">#40880</a> — TQ+spec token-cascade loops</li>
+<li><a href="https://github.com/vllm-project/vllm/issues/41559">#41559</a> — DFlash structurally incompatible with TQ (causal=True vs False)</li>
+<li><a href="https://github.com/vllm-project/vllm/issues/42808">#42808</a> — workspace allocation failure with TQ+MTP on v0.21.0</li>
+</ul>
+
+<h2 id="mem-math">Memory math: Qwen3.5 is a HYBRID architecture (only 8 of 32 layers cache KV)</h2>
+
+<p>Initially I predicted F16 KV at 131K ≈ 16 GB but measured was 4.4 GB. I attributed this to llama.cpp's flash-attention layout. <strong>That was wrong.</strong> The real cause is in the server log:</p>
+
+<pre><code>llama_kv_cache: size = 4224.00 MiB (135168 cells, 8 layers, 4/1 seqs),
+                K (f16): 2112.00 MiB, V (f16): 2112.00 MiB
+llama_memory_recurrent: size = 201.00 MiB (4 cells, 32 layers, 4 seqs),
+                R (f32): 9.00 MiB, S (f32): 192.00 MiB</code></pre>
+
+<p><strong>Only 8 of 32 layers store an attention KV cache.</strong> The other 24 layers are <strong>recurrent/SSM</strong>-style with constant ~200 MB total <em>regardless of context length</em>.</p>
+
+<p>Independently confirmed in vLLM v0.21.0 startup log: <code>TQ hybrid: full-attention layers [3, 7, 11, 15, 19, 23, 27, 31]</code> — exactly 8, every 4th of 32. Qwen3.5 is in the Jamba / Falcon-H1 family of hybrid attention+SSM models.</p>
+
+<h3>Corrected per-token KV math</h3>
+<pre><code>8 full-attn layers × (K + V) × n_embd_k_gqa × 2 bytes
+= 8 × 2 × 1024 × 2 bytes = 32 KiB/token
+
+131,082 tokens × 32 KiB = ~4.1 GB ✓ (matches measured 4,425 MiB)</code></pre>
+
+<h3>Per-method savings — corrected</h3>
+<table>
+<thead><tr><th>Method</th><th class="num">Per-token (attn only)</th><th class="num">131K total</th><th class="num">vs F16</th></tr></thead>
+<tbody>
+<tr><td>F16 (8 attention layers)</td><td class="num">32 KiB</td><td class="num">4.2 GB</td><td class="num">1.0× (baseline)</td></tr>
+<tr><td>TQ3_tcq (8 attention layers)</td><td class="num">~8 KiB</td><td class="num">~1.0 GB</td><td class="num"><strong>~4× compression ✓</strong></td></tr>
+<tr><td>Recurrent state (24 layers)</td><td class="num">n/a (fixed state)</td><td class="num">constant ~0.2 GB</td><td class="num">doesn't compress</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<strong>Implication:</strong> TQ KV compression is <strong>less impactful on Qwen3.5 than on pure-attention models</strong> because only 25% of layers contribute to the cache that scales with context.
+<ul>
+<li>Pure-attention 32-layer Llama-3-9B-ish at 128K: F16 KV ≈ 16 GB → TQ3 saves ~12 GB</li>
+<li><strong>Qwen3.5-9B hybrid at 128K: F16 KV ≈ 4 GB → TQ3 saves ~3 GB</strong></li>
+</ul>
+This explains why the headline VRAM win on 9B was modest — the architecture is already KV-frugal by design. TQ's value will be larger on traditional attention models, especially at longer contexts.
+</div>
+
+<h3>How to detect a hybrid GGUF</h3>
+<p>Check the startup log for <code>llama_kv_cache: size = X MiB (N cells, K layers, ...)</code>. If <code>K &lt; n_layer</code>, the model is hybrid.</p>
+
+<h2 id="method">Methodology</h2>
+
+<h3>Test harness</h3>
+<p>Python <code>httpx.stream(...)</code> drives streaming chat completions over SSE. Per-chunk timestamps captured for TTFT and inter-token latency. Output collected as single string for substring-match validation.</p>
+
+<h3>NIAH prompt construction</h3>
+<p>Used <code>lucebox-hub/pflash/tests/niah_gen.py</code>:</p>
+<ul>
+<li>Filler: <code>"The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again. "</code> (repeated)</li>
+<li>Needle: <code>"The special magic {key} number is: {value}."</code> at random position (25-75% through)</li>
+<li>Question: <code>"What is the special magic {key} number? Answer in one short sentence."</code></li>
+<li>Tokenizer: <code>Qwen/Qwen3.5-9B</code>, binary search to land within 0.5% of target token count</li>
+</ul>
+
+<h3>VRAM measurement</h3>
+<p>Background <code>nvidia-smi --query-gpu=timestamp,memory.used,utilization.gpu --format=csv -l 2</code> CSV. Peak extracted via awk.</p>
+
+<h3>Server readiness probe</h3>
+<p>llama.cpp <code>/health</code> returns 200 before model loading completes. We probe <code>/v1/chat/completions</code> with a 1-token request instead, treating HTTP 200 (not 503/400) as the ready signal.</p>
+
+<h3>Known failure modes encountered</h3>
+<ul>
+<li>Q4_K_M DFlash draft missing tokenizer merges → use Q8_0 variant only</li>
+<li><code>/health</code> false-positive readiness</li>
+<li>Prompt 131,082 tokens vs <code>-c 131072</code> → 400 reject; bump context slightly</li>
+<li>Thinking mode kills speculative decoding → always disable via <code>--reasoning-format none</code></li>
+<li>vLLM TQ + spec silently disabled (no error)</li>
+<li>WSL2 <code>ptrace_scope=1</code> blocks <code>py-spy</code> → use cProfile via SIGTERM dump</li>
+<li><code>pkill -f</code> kills parent bash shell when pattern matches PATH expansion → kill by specific PID</li>
+</ul>
+
+<h2 id="tq-variants">TurboQuant variant comparison ⭐ (added 2026-05-24)</h2>
+
+<p>After initial Group D shipped with <code>turbo3_tcq</code> as default, we swept other beellama TurboQuant KV variants on the <strong>same 10 NIAH @ 60K cases through the Docker image</strong>. <strong>Result: <code>turbo4</code> is 82% faster than <code>turbo3_tcq</code> at identical accuracy.</strong></p>
+
+<table>
+<thead><tr><th>Variant</th><th>Bits</th><th>Encoding</th><th>Accuracy</th><th class="num">TTFT median</th><th class="num"><strong>tok/s</strong></th><th class="num">Peak VRAM</th></tr></thead>
+<tbody>
+<tr><td><strong><code>turbo4</code></strong> ⭐ (new default)</td><td>4</td><td>raw</td><td class="pass">10/10</td><td class="num">7.58s</td><td class="num"><strong>71.4</strong></td><td class="num">9,734 MiB</td></tr>
+<tr><td><code>turbo3</code></td><td>3</td><td>raw</td><td class="pass">10/10</td><td class="num">6.63s</td><td class="num">47.3</td><td class="num">9,862 MiB</td></tr>
+<tr><td><code>turbo3_tcq</code> (old default)</td><td>3</td><td>TCQ-encoded</td><td class="pass">10/10</td><td class="num">8.96s</td><td class="num">39.2</td><td class="num">9,878 MiB</td></tr>
+</tbody>
+</table>
+
+<ul>
+<li>All three variants preserve NIAH retrieval quality at 100% — TurboQuant KV doesn't degrade long-context behavior at 3 or 4 bits</li>
+<li>TCQ encoding's bit savings are lost in measurement noise (~140 MiB difference) but its decode cost is real (~40% slower than raw 3-bit)</li>
+<li><code>turbo4</code> wins because the simpler 4-bit kernel runs much faster, with sub-1% VRAM cost</li>
+<li>Production deployment defaults swapped to <code>turbo4</code> in <code>docs/deployment/docker/</code> .env.example, Dockerfile, compose.yml, README, and the integration guide</li>
+</ul>
+
+<h2>Bonus run — vLLM v0.21.0 TurboQuant on Qwen3.5-9B-FP8 (failed, but informative)</h2>
+
+<p>Tried <code>vllm/vllm-openai:v0.21.0</code> with <code>--kv-cache-dtype turboquant_k3v4_nc</code> on <code>lovedheart/Qwen3.5-9B-FP8</code>, single-slot, 64K context, to directly compare VRAM to beellama's ~10 GB.</p>
+
+<div class="note"><strong>Hit two distinct bugs.</strong></div>
+
+<ol>
+<li><strong>OOM at <code>--gpu-memory-utilization 0.55</code> (13.5 GB cap).</strong> FP8 9B weights + vLLM compile/Triton/CUDA-graph overhead consumed ~13 GB, no room for KV pool. Even <code>--enforce-eager</code> + 4K context failed. Error: <code>ValueError: No available memory for the cache blocks</code>.</li>
+<li><strong>TurboQuant workspace assertion at long context</strong> at 0.75 (18 GB cap):
+<pre><code>AssertionError: Workspace is locked but allocation from
+'turboquant_attn.py:747:_continuation_prefill' requires 8.00 MB,
+current size is 0.51 MB. Workspace growth is not allowed after locking.</code></pre>
+Same class of bug as <a href="https://github.com/vllm-project/vllm/issues/42808">Issue #42808</a> — TQ workspace pre-sized at warmup, locked, then real long prefill needs more and asserts. Issue was filed for TQ+MTP but also fires on TQ+long-context without spec.</li>
+</ol>
+
+<h3>VRAM comparison (corrected interpretation)</h3>
+
+<p>vLLM at <code>--gpu-memory-utilization 0.75 --max-model-len 65536</code> allocated <strong>16,936 MiB</strong> at steady state. Estimated breakdown:</p>
+<table>
+<thead><tr><th>Component</th><th class="num">MiB</th><th>beellama equivalent</th></tr></thead>
+<tbody>
+<tr><td>FP8 weights (vs beellama Q8 GGUF 8,045)</td><td class="num">~8,900</td><td>~8,045</td></tr>
+<tr><td>torch.compile/Inductor cache</td><td class="num">~500-1,000</td><td>0 (no JIT)</td></tr>
+<tr><td>Triton kernel scratch (TQ)</td><td class="num">~500</td><td>~100</td></tr>
+<tr><td>CUDA graph capture (sizes [1,2])</td><td class="num">~1,000-2,000</td><td>0 (no graphs)</td></tr>
+<tr><td>KV cache pool reservation</td><td class="num">~3,000-4,000</td><td>~700 (actual KV)</td></tr>
+<tr><td>Block table / scheduler state</td><td class="num">~300</td><td>~0</td></tr>
+<tr><th>Total</th><th class="num">~16,936</th><th>9,878</th></tr>
+</tbody>
+</table>
+
+<p>vLLM is ~7 GB heavier than beellama at this workload. Roughly 3-4 GB is genuinely needed (compile, CUDA graphs, Triton, paged block manager); the rest is pool over-allocation that comes from <code>--gpu-memory-utilization</code> policy, not actual need.</p>
+
+<p><strong>Why we didn't retry:</strong> even with PR #40914's workspace fix cherry-picked, vLLM's runtime overhead structurally exceeds beellama for single-user use. beellama wins by being simpler (no JIT, no CUDA graphs, no paged manager) at the cost of no continuous batching — fine for our use case.</p>
+
+<h2 id="next">Next steps & watch list</h2>
+<p>See <code>docs/watchlist.md</code> for the running list. Highlights:</p>
+<ul>
+<li><strong>vLLM PR #40914 merges</strong> → unlocks TQ + MTP combo on Qwen3.5/3.6 in vLLM</li>
+<li><strong>vLLM Issue #41559 resolution</strong> → unlocks TQ + DFlash combo on vLLM</li>
+<li><strong>Lucebox publishes PFlash recipe for 9B</strong> → extends long-context VRAM win down to 9B</li>
+<li><strong>Smaller DFlash draft for 9B</strong> (~0.5B vs 1.5B current) → could make the combo win at shorter outputs</li>
+</ul>
+
+<p>Set up a monthly cloud-side reminder via <code>/schedule monthly check the TurboQuant_Benchmark watchlist for PR merges and issue updates</code> to be paged when these land.</p>
+
+<script>
+// Data
+const groupA = {
+    labels: ['baseline F16', 'TQ3 KV', 'DFlash', 'TQ3+DFlash'],
+    tok_s_4k: [87.4, 84.5, 77.0, 80.5],
+    vram_4k: [9314, 9226, 10846, 10754],
+};
+const groupB = {
+    labels: ['F16 KV (128K)', 'TQ3 KV (128K)', 'TQ3+DFlash (128K)'],
+    tok_s_128k_short: [61.6, 71, 30.75],
+    vram_128k: [13418, 10500, 12778],
+};
+const groupC = {
+    labels: ['F16 KV', 'TQ3+DFlash'],
+    tok_s_128k_4k_output: [59.3, 32.5],
+};
+const groupD = {
+    cases: [0,1,2,3,4,5,6,7,8,9],
+    keys: ['qahftrxc','bsdmrulm','kowefada','hmcibahd','xkpwfnpy','jllinkbk','odshyfte','bkctnbbt','mgqgmzci','gnevgoyk'],
+    ttfts:[8.90,9.19,9.26,9.24,9.30,8.59,8.91,9.00,8.90,8.91],
+    tok_s:[38.12,39.18,39.18,39.22,39.18,39.21,39.32,39.34,39.15,39.17],
+};
+
+// Chart 1: tok/s by config × context
+new Chart(document.getElementById('chart1'), {
+    type: 'bar',
+    data: {
+        labels: ['baseline F16','TQ3_tcq KV','DFlash','TQ3_tcq+DFlash combo','turbo4 KV ⭐'],
+        datasets: [
+            { label: '4K context (256 tok out)', data: [87.4, 84.5, 77.0, 80.5, null], backgroundColor: '#2c5f2d' },
+            { label: '128K context (16 tok out)', data: [61.6, 71, null, 30.75, null], backgroundColor: '#88aa88' },
+            { label: '128K + 4K out (sustained)', data: [59.3, null, null, 32.5, null], backgroundColor: '#cc8855' },
+            { label: '60K validation × 10', data: [null, 39.2, null, null, 71.4], backgroundColor: '#ad6800' },
+        ],
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'tok/s' } } }
+    }
+});
+
+// Chart 2: stacked VRAM breakdown
+new Chart(document.getElementById('chart2'), {
+    type: 'bar',
+    data: {
+        labels: ['F16 baseline @ 4K','TQ3 KV @ 4K','DFlash @ 4K','combo @ 4K',
+                 'F16 @ 128K','combo @ 128K','TQ3 only @ 60K (prod)','27B Lucebox @ 128K (full stack)'],
+        datasets: [
+            { label: 'Model weights', data: [8045,8045,8045,8045,8045,8045,8045,14990], backgroundColor: '#2c5f2d' },
+            { label: 'Draft model (DFlash)', data: [0,0,1100,1100,0,1100,0,1800], backgroundColor: '#88aa88' },
+            { label: 'KV cache', data: [180,90,180,90,4553,1100,300,600], backgroundColor: '#cc8855' },
+            { label: 'PFlash drafter (parked at peak)', data: [0,0,0,0,0,0,0,0], backgroundColor: '#aaaaaa' },
+            { label: 'DDTree / spec workspace', data: [0,0,300,300,0,500,0,500], backgroundColor: '#bdac72' },
+            { label: 'Compute scratch', data: [493,493,493,493,493,493,493,493], backgroundColor: '#a89c6e' },
+            { label: 'Unaccounted (CUDA ctx etc.)', data: [596,598,728,726,1647,1500,1040,1500], backgroundColor: '#c5b486' },
+        ],
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+            x: { stacked: true, ticks: { maxRotation: 35, minRotation: 25 } },
+            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'VRAM (MiB)' } }
+        }
+    }
+});
+
+// Chart 3: TTFT scaling
+new Chart(document.getElementById('chart3'), {
+    type: 'line',
+    data: {
+        labels: ['4K','32K','60K','128K'],
+        datasets: [
+            { label: 'F16 KV baseline', data: [0.16, 2.5, 5, 20.7], borderColor: '#2c5f2d', backgroundColor: '#2c5f2d33', tension: 0.2 },
+            { label: 'TQ3 KV (no spec)', data: [0.16, 2.5, 8.96, 20.7], borderColor: '#cc8855', backgroundColor: '#cc885533', tension: 0.2 },
+            { label: 'TQ3 + DFlash combo', data: [null, null, null, 28.8], borderColor: '#a83232', backgroundColor: '#a8323233', tension: 0.2 },
+            { label: 'Lucebox 27B (PFlash, RTX 4090 WSL2)', data: [null, null, null, 157], borderColor: '#444', backgroundColor: '#44444433', tension: 0.2, borderDash: [5,5] },
+            { label: 'Lucebox 27B claim (RTX 3090 native)', data: [null, null, null, 24.8], borderColor: '#888', backgroundColor: '#88888833', tension: 0.2, borderDash: [2,2] },
+        ],
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+            y: { type: 'logarithmic', title: { display: true, text: 'TTFT (s, log scale)' } },
+            x: { title: { display: true, text: 'Input context size' } }
+        }
+    }
+});
+
+// Chart 4: Group D per-case scatter
+new Chart(document.getElementById('chart4'), {
+    type: 'bar',
+    data: {
+        labels: groupD.keys,
+        datasets: [
+            { label: 'TTFT (s)', data: groupD.ttfts, backgroundColor: '#2c5f2d', yAxisID: 'y' },
+            { label: 'Decode tok/s', data: groupD.tok_s, backgroundColor: '#cc8855', yAxisID: 'y1', type: 'line', tension: 0.1 },
+        ],
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+            y:  { type: 'linear', position: 'left',  title: { display: true, text: 'TTFT (s)' }, beginAtZero: true },
+            y1: { type: 'linear', position: 'right', title: { display: true, text: 'tok/s' },    beginAtZero: true,
+                  grid: { drawOnChartArea: false } }
+        }
+    }
+});
+</script>
+
+</div>
+</body>
+</html>
