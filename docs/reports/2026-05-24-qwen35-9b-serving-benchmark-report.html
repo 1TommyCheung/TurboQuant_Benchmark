@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Qwen3.5-9B Inference Server Benchmark — 2026-05-24</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  :root {
+    --accent: #8abeb7; --border: #5f87ff; --bg: #1a1a1f; --bg-card: #25252b;
+    --text: #e5e5e7; --muted: #808080; --success: #b5bd68; --error: #cc6666;
+    --warning: #f0c674;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, 'Segoe UI', sans-serif;
+         line-height: 1.6; max-width: 1280px; margin: 0 auto; padding: 2em; }
+  h1 { color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 0.5em; font-size: 1.8em; }
+  h2 { color: var(--accent); margin-top: 2.5em; border-bottom: 1px solid #333; padding-bottom: 0.25em; }
+  h3 { color: var(--accent); margin-top: 1.5em; }
+  table { border-collapse: collapse; width: 100%; background: var(--bg-card); margin: 0.5em 0 1em; }
+  th, td { padding: 0.55em 0.9em; border-bottom: 1px solid #333; text-align: left; }
+  th { background: rgba(95, 135, 255, 0.1); color: var(--accent); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .winner-row { background: rgba(181, 189, 104, 0.07); }
+  .fail-row { background: rgba(204, 102, 102, 0.07); }
+  .chart-container { background: var(--bg-card); border-radius: 8px; padding: 1em; margin: 1em 0; }
+  .meta { color: var(--muted); font-size: 0.9em; }
+  code { background: rgba(128,128,128,0.15); padding: 0.1em 0.4em; border-radius: 3px; font-size: 0.9em; }
+  .badge { display: inline-block; padding: 0.15em 0.5em; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+  .badge-pass { background: rgba(181,189,104,0.2); color: var(--success); }
+  .badge-fail { background: rgba(204,102,102,0.2); color: var(--error); }
+  .badge-warn { background: rgba(240,198,116,0.2); color: var(--warning); }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1em; margin: 1em 0; }
+  .summary-card { background: var(--bg-card); border-radius: 8px; padding: 1.2em; text-align: center; }
+  .summary-card .value { font-size: 2em; font-weight: 700; color: var(--accent); }
+  .summary-card .label { color: var(--muted); font-size: 0.85em; margin-top: 0.3em; }
+  .issue-card { background: var(--bg-card); border-left: 3px solid var(--error); padding: 1em 1.2em; margin: 0.8em 0; border-radius: 0 8px 8px 0; }
+  .issue-card.warn { border-left-color: var(--warning); }
+  .issue-card h4 { margin: 0 0 0.3em 0; color: var(--text); }
+  .issue-card p { margin: 0; color: var(--muted); font-size: 0.9em; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Qwen3.5-9B Inference Server Benchmark</h1>
+<p class="meta"><strong>Date:</strong> 2026-05-23 / 2026-05-24 &middot; <strong>GPU:</strong> RTX 4090 24GB &middot; <strong>OS:</strong> WSL2 Ubuntu &middot; <strong>Author:</strong> Tommy Cheung</p>
+
+<!-- Summary Cards -->
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="value">158</div>
+    <div class="label">tok/s — beellama DFlash<br>(fastest single-user)</div>
+  </div>
+  <div class="summary-card">
+    <div class="value">846</div>
+    <div class="label">tok/s — vLLM C=16<br>(best throughput)</div>
+  </div>
+  <div class="summary-card">
+    <div class="value">11.7 GB</div>
+    <div class="label">VRAM — beellama DFlash<br>(most efficient)</div>
+  </div>
+  <div class="summary-card">
+    <div class="value">125</div>
+    <div class="label">tok/s — Lucebox 27B<br>(largest model on 24GB)</div>
+  </div>
+</div>
+
+<h2>1. Single-User Performance (C=1)</h2>
+
+<div class="chart-container" id="chart-c1-toks"></div>
+<script>
+Plotly.newPlot('chart-c1-toks', [
+  {
+    x: ['vLLM', 'vLLM MTP', 'vLLM DFlash', 'SGLang', 'beellama', 'beellama DFlash', 'Lucebox 27B'],
+    y: [54.7, 41.4, 40.1, 57.2, 60.9, 158.0, 54.7],
+    type: 'bar',
+    marker: { color: ['#5f87ff', '#7fa0ff', '#9fb8ff', '#8abeb7', '#b5bd68', '#b5bd68', '#f0c674'] },
+    text: ['54.7', '41.4', '40.1', '57.2', '60.9', '158.0', '54.7'],
+    textposition: 'outside',
+  }
+], {
+  title: { text: 'Throughput at C=1 (tok/s)', font: { color: '#e5e5e7' } },
+  paper_bgcolor: '#25252b', plot_bgcolor: '#25252b',
+  font: { color: '#e5e5e7' },
+  xaxis: { gridcolor: '#333' },
+  yaxis: { title: 'tok/s', gridcolor: '#333' },
+  margin: { t: 50, b: 80 },
+}, { responsive: true });
+</script>
+
+<div class="chart-container" id="chart-c1-latency"></div>
+<script>
+Plotly.newPlot('chart-c1-latency', [
+  {
+    x: ['vLLM', 'vLLM MTP', 'vLLM DFlash', 'SGLang', 'beellama', 'beellama DFlash', 'Lucebox 27B'],
+    y: [9.25, 4.85, 3.85, 8.73, 6.08, 2.98, 9.08],
+    type: 'bar',
+    marker: { color: ['#5f87ff', '#7fa0ff', '#9fb8ff', '#8abeb7', '#b5bd68', '#b5bd68', '#f0c674'] },
+    text: ['9.25s', '4.85s', '3.85s', '8.73s', '6.08s', '2.98s', '9.08s'],
+    textposition: 'outside',
+  }
+], {
+  title: { text: 'Request Latency at C=1 (seconds, lower is better)', font: { color: '#e5e5e7' } },
+  paper_bgcolor: '#25252b', plot_bgcolor: '#25252b',
+  font: { color: '#e5e5e7' },
+  xaxis: { gridcolor: '#333' },
+  yaxis: { title: 'Latency p50 (s)', gridcolor: '#333' },
+  margin: { t: 50, b: 80 },
+}, { responsive: true });
+</script>
+
+<h2>2. Concurrency Scaling</h2>
+
+<div class="chart-container" id="chart-concurrency"></div>
+<script>
+Plotly.newPlot('chart-concurrency', [
+  { x: [1, 4, 16], y: [54.7, 248.9, 846.0], name: 'vLLM baseline', mode: 'lines+markers', line: { width: 3 } },
+  { x: [1, 4, 16], y: [41.4, 156.9, 493.9], name: 'vLLM MTP', mode: 'lines+markers', line: { dash: 'dash' } },
+  { x: [1, 4, 16], y: [40.1, 146.1, 399.9], name: 'vLLM DFlash', mode: 'lines+markers', line: { dash: 'dot' } },
+  { x: [1, 4, 16], y: [57.2, 253.3, 813.2], name: 'SGLang', mode: 'lines+markers', line: { width: 3 } },
+  { x: [1, 4], y: [60.9, 215.4], name: 'beellama', mode: 'lines+markers', line: { width: 2 } },
+], {
+  title: { text: 'Throughput vs Concurrency', font: { color: '#e5e5e7' } },
+  paper_bgcolor: '#25252b', plot_bgcolor: '#25252b',
+  font: { color: '#e5e5e7' },
+  xaxis: { title: 'Concurrency', gridcolor: '#333', dtick: 4 },
+  yaxis: { title: 'tok/s', gridcolor: '#333' },
+  legend: { x: 0.02, y: 0.98 },
+  margin: { t: 50 },
+}, { responsive: true });
+</script>
+
+<h2>3. VRAM Efficiency</h2>
+
+<div class="chart-container" id="chart-vram"></div>
+<script>
+Plotly.newPlot('chart-vram', [
+  {
+    x: ['vLLM', 'vLLM MTP', 'vLLM DFlash', 'SGLang', 'beellama', 'beellama DFlash', 'Lucebox 27B'],
+    y: [22984, 23482, 23994, 22222, 15603, 11730, 23484],
+    type: 'bar',
+    marker: { color: ['#5f87ff', '#7fa0ff', '#9fb8ff', '#8abeb7', '#b5bd68', '#b5bd68', '#f0c674'] },
+    text: ['23.0 GB', '23.5 GB', '24.0 GB', '22.2 GB', '15.6 GB', '11.7 GB', '23.5 GB'],
+    textposition: 'outside',
+  },
+  {
+    x: ['vLLM', 'vLLM MTP', 'vLLM DFlash', 'SGLang', 'beellama', 'beellama DFlash', 'Lucebox 27B'],
+    y: [24563, 24563, 24563, 24563, 24563, 24563, 24563],
+    type: 'scatter',
+    mode: 'lines',
+    name: '24GB limit',
+    line: { color: '#cc6666', dash: 'dash', width: 2 },
+  }
+], {
+  title: { text: 'VRAM Usage (MB)', font: { color: '#e5e5e7' } },
+  paper_bgcolor: '#25252b', plot_bgcolor: '#25252b',
+  font: { color: '#e5e5e7' },
+  xaxis: { gridcolor: '#333' },
+  yaxis: { title: 'VRAM (MB)', gridcolor: '#333', range: [0, 26000] },
+  showlegend: false,
+  margin: { t: 50, b: 80 },
+}, { responsive: true });
+</script>
+
+<h2>4. TTFT Comparison</h2>
+
+<div class="chart-container" id="chart-ttft"></div>
+<script>
+Plotly.newPlot('chart-ttft', [
+  {
+    x: ['vLLM', 'vLLM MTP', 'vLLM DFlash', 'SGLang', 'beellama', 'beellama DFlash', 'Lucebox 27B'],
+    y: [38, 62, 62, 63, 143, 252, 256],
+    type: 'bar',
+    marker: { color: ['#5f87ff', '#7fa0ff', '#9fb8ff', '#8abeb7', '#b5bd68', '#b5bd68', '#f0c674'] },
+    text: ['38ms', '62ms', '62ms', '63ms', '143ms', '252ms', '256ms'],
+    textposition: 'outside',
+  }
+], {
+  title: { text: 'Time to First Token (ms, lower is better)', font: { color: '#e5e5e7' } },
+  paper_bgcolor: '#25252b', plot_bgcolor: '#25252b',
+  font: { color: '#e5e5e7' },
+  xaxis: { gridcolor: '#333' },
+  yaxis: { title: 'TTFT (ms)', gridcolor: '#333' },
+  margin: { t: 50, b: 80 },
+}, { responsive: true });
+</script>
+
+<h2>5. Speculative Decoding: tok/s vs Latency Trade-off</h2>
+
+<div class="chart-container" id="chart-tradeoff"></div>
+<script>
+Plotly.newPlot('chart-tradeoff', [
+  {
+    x: [9.25, 4.85, 3.85, 8.73, 6.08, 2.98, 9.08],
+    y: [54.7, 41.4, 40.1, 57.2, 60.9, 158.0, 54.7],
+    mode: 'markers+text',
+    text: ['vLLM', 'vLLM MTP', 'vLLM DFlash', 'SGLang', 'beellama', 'beellama DFlash', 'Lucebox 27B'],
+    textposition: ['top center', 'top center', 'top center', 'top center', 'top center', 'top center', 'bottom center'],
+    marker: {
+      size: [22, 22, 22, 22, 22, 30, 22],
+      color: ['#5f87ff', '#7fa0ff', '#9fb8ff', '#8abeb7', '#b5bd68', '#b5bd68', '#f0c674'],
+    },
+    type: 'scatter',
+  }
+], {
+  title: { text: 'tok/s vs Latency — Top-Right is Best', font: { color: '#e5e5e7' } },
+  paper_bgcolor: '#25252b', plot_bgcolor: '#25252b',
+  font: { color: '#e5e5e7' },
+  xaxis: { title: 'Latency p50 (s) — lower is better →', gridcolor: '#333', autorange: 'reversed' },
+  yaxis: { title: 'tok/s — higher is better ↑', gridcolor: '#333' },
+  showlegend: false,
+  margin: { t: 50 },
+}, { responsive: true });
+</script>
+
+<h2>6. Lucebox DDTree Budget Sweep</h2>
+
+<div class="two-col">
+<div class="chart-container" id="chart-budget-35"></div>
+<div class="chart-container" id="chart-budget-36"></div>
+</div>
+<script>
+Plotly.newPlot('chart-budget-35', [
+  { x: [22, 26, 28, 30, 34], y: [122.95, 123.68, 125.37, 123.12, 111.76], name: 'tok/s', type: 'bar', marker: { color: '#b5bd68' } },
+], {
+  title: { text: 'Qwen3.5-27B Budget Sweep', font: { color: '#e5e5e7', size: 14 } },
+  paper_bgcolor: '#25252b', plot_bgcolor: '#25252b',
+  font: { color: '#e5e5e7' }, xaxis: { title: 'DDTree Budget', gridcolor: '#333' },
+  yaxis: { title: 'tok/s', gridcolor: '#333', range: [100, 130] },
+  margin: { t: 40, l: 50, r: 20 }, showlegend: false,
+}, { responsive: true });
+
+Plotly.newPlot('chart-budget-36', [
+  { x: [22, 26, 28, 30, 34, 35, 36, 37, 38], y: [79.65, 82.37, 82.46, 79.82, 83.00, 83.12, 84.55, 84.30, 82.80], name: 'tok/s', type: 'bar', marker: { color: '#f0c674' } },
+], {
+  title: { text: 'Qwen3.6-27B Budget Sweep', font: { color: '#e5e5e7', size: 14 } },
+  paper_bgcolor: '#25252b', plot_bgcolor: '#25252b',
+  font: { color: '#e5e5e7' }, xaxis: { title: 'DDTree Budget', gridcolor: '#333' },
+  yaxis: { title: 'tok/s', gridcolor: '#333', range: [70, 90] },
+  margin: { t: 40, l: 50, r: 20 }, showlegend: false,
+}, { responsive: true });
+</script>
+
+<h2>7. Issues Encountered</h2>
+
+<div class="issue-card">
+  <h4>🔴 Thinking Mode Kills Speculative Decoding</h4>
+  <p>Qwen3.5's thinking chains are unpredictable — DFlash acceptance drops to 45.6% (needs >60% to break even). Disabled via <code>chat_template_kwargs: {"enable_thinking": false}</code>.</p>
+</div>
+
+<div class="issue-card">
+  <h4>🔴 SGLang MTP/DFlash Broken on 24GB (v0.5.12)</h4>
+  <p>MTP: <code>Qwen3_5ForConditionalGeneration</code> missing from NEXTN auto-detect (PR #23859). DFlash: CUDA graph pre-allocation OOMs at all memory fractions.</p>
+</div>
+
+<div class="issue-card warn">
+  <h4>🟡 WSL2 Filesystem Bottleneck</h4>
+  <p>NTFS-mounted models via <code>/mnt/</code> showed 9% CPU utilization and 10x slower loading. Always use native ext4 <code>/home/</code> for model files.</p>
+</div>
+
+<div class="issue-card warn">
+  <h4>🟡 DFlash Drafter Compatibility</h4>
+  <p>Community GGUF drafters had missing tokenizer data or wrong architecture tags. Lucebox requires <code>qwen35-dflash-draft</code> arch — use their <code>convert_dflash_to_gguf.py</code> converter.</p>
+</div>
+
+<div class="issue-card warn">
+  <h4>🟡 lm-evaluation-harness Not Viable for Server Benchmarks</h4>
+  <p>tinyBenchmarks via <code>local-chat-completions</code> doesn't support loglikelihood. <code>local-completions</code> works but takes 10+ hours at 1 req/s. Replaced with 10-query quick quality check.</p>
+</div>
+
+<h2>8. Recommendation Matrix</h2>
+
+<table>
+<tr><th>Scenario</th><th>Server</th><th>Config</th><th>Why</th></tr>
+<tr class="winner-row"><td>Coding agent (single user)</td><td><strong>beellama DFlash</strong></td><td>Q8 + DFlash drafter</td><td>158 tok/s, 2.98s latency, 11.7 GB VRAM</td></tr>
+<tr><td>API serving (multi-user)</td><td>vLLM</td><td>FP8 baseline</td><td>846 tok/s at C=16, continuous batching</td></tr>
+<tr><td>Large model, consumer GPU</td><td>Lucebox</td><td>Q4 + DFlash + TQ3 KV</td><td>27B at 125 tok/s on 24GB</td></tr>
+<tr><td>Low VRAM budget</td><td>beellama DFlash</td><td>Q8 + drafter</td><td>11.7 GB total footprint</td></tr>
+<tr><td>Lowest TTFT</td><td>vLLM</td><td>FP8 baseline</td><td>38ms TTFT</td></tr>
+</table>
+
+<h2>9. Next Steps</h2>
+
+<table>
+<tr><th>Priority</th><th>Task</th><th>Expected Impact</th></tr>
+<tr><td><span class="badge badge-fail">HIGH</span></td><td>PFlash long-context TTFT test on Lucebox</td><td>10x TTFT improvement at 128K — game-changer for RAG</td></tr>
+<tr><td><span class="badge badge-fail">HIGH</span></td><td>TurboQuant KV cache comparison across all servers</td><td>Longer context / lower VRAM for all servers</td></tr>
+<tr><td><span class="badge badge-warn">MED</span></td><td>Bare metal Linux comparison</td><td>Establish true performance ceiling (3-5% above WSL2)</td></tr>
+<tr><td><span class="badge badge-warn">MED</span></td><td>beellama DFlash multi-slot (np=4)</td><td>Small-team serving viability</td></tr>
+<tr><td><span class="badge badge-pass">LOW</span></td><td>SGLang PR #23859 validation</td><td>Unlock SGLang spec decode on 24GB</td></tr>
+<tr><td><span class="badge badge-pass">LOW</span></td><td>Qwen3.6 drafter re-evaluation (when training completes)</td><td>30-50% Lucebox throughput improvement</td></tr>
+</table>
+
+<p class="meta" style="margin-top:3em; text-align:center;">
+  Generated 2026-05-24 &middot; Full data: <code>tqbench/benchmarks/generation/reports/raw/</code> &middot;
+  Framework: <code>tqbench</code> &middot;
+  <a href="https://github.com/Luce-Org/lucebox-hub/pull/272" style="color:var(--accent);">Lucebox PR #272</a>
+</p>
+
+</body>
+</html>
