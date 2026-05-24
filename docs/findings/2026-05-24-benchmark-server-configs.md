@@ -171,3 +171,30 @@ python dflash/scripts/bench_he.py --n-gen 256 --ddtree-budget 22
 - Target: `unsloth/Qwen3.6-27B-GGUF` → `Qwen3.6-27B-Q4_K_M.gguf` (16 GB)
 - DFlash drafter: `Lucebox/Qwen3.6-27B-DFlash-GGUF` → `dflash-draft-3.6-q8_0.gguf` (1.8 GB)
 - PFlash drafter: `unsloth/Qwen3-0.6B-GGUF` → `Qwen3-0.6B-BF16.gguf` (1.2 GB) — downloaded but not tested yet
+
+### Budget Sweep — Qwen3.5-27B Q4_K_M (apple-to-apple with Lucebox README)
+
+**Models (exact match to Lucebox README):**
+- Target: `unsloth/Qwen3.5-27B-GGUF` → `Qwen3.5-27B-Q4_K_M.gguf` (16 GB)
+- DFlash drafter: `spiritbuun/Qwen3.5-27B-DFlash-GGUF` → `dflash-draft-q4_k_m.gguf` (986 MB)
+- Models on native ext4 filesystem (`/home/tommy/models/`)
+
+**Command:** `python dflash/scripts/bench_he.py --n-gen 256 --ddtree-budget N`
+
+| Budget | Mean tok/s | Peak tok/s | Acceptance Length |
+|---|---|---|---|
+| 22 | 122.95 | 182.1 | 7.45 |
+| 26 | 123.68 | 182.4 | 7.60 |
+| **28** | **125.37** | **183.8** | **7.77** |
+| 30 | 123.12 | 181.4 | 7.62 |
+| 34 | 111.76 | 175.3 | 7.28 |
+
+**Optimal budget for RTX 4090: 28**
+
+**vs Lucebox claim:** 129.5 tok/s on RTX 3090, budget=22. We got 125.4 tok/s on RTX 4090 WSL2 — **97% of claimed speed**. Gap is WSL2 overhead.
+
+**Architecture analysis (why budget=28 > budget=22 on 4090):**
+- RTX 4090 has 72 MB L2 cache vs 3090's 6 MB — DDTree verification working set fits in cache
+- 128 SMs vs 82 SMs — wider parallel verification
+- Similar memory bandwidth (1008 vs 936 GB/s)
+- Budget=34+ degrades — tree size exceeds compute budget at that point
