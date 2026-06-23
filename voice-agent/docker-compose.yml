@@ -1,0 +1,75 @@
+# docker-compose for the Pattern C voice agent (audio-service + beellama LLM).
+#
+# Split GPU topology (see docs/voice-agent/2026-06-23-pattern-c-design.md):
+#   beellama (LLM)      -> RTX 4090   (device 0)
+#   audio-service stack -> RTX 3090Ti (device 1)
+# Both services share the bridge network "voicenet" so audio-service can
+# resolve "beellama" by DNS for /v1/chat/completions calls.
+
+services:
+  beellama:
+    image: ghcr.io/1tommycheung/beellama-server:stable
+    container_name: voice-beellama
+    restart: unless-stopped
+    networks:
+      - voicenet
+    ports:
+      - "8083:8083"
+    volumes:
+      - ${HOME}/models:/models:ro
+    environment:
+      MODEL_PATH: /models/Qwen3.5-9B-Q4_K_M.gguf
+      CACHE_TYPE_K: f16
+      CACHE_TYPE_V: f16
+      CONTEXT_SIZE: "4096"
+      REASONING_FORMAT: none
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']   # 4090
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/v1/models || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
+
+  audio-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.audio-service
+    container_name: voice-audio-service
+    restart: unless-stopped
+    networks:
+      - voicenet
+    ports:
+      - "8090:8090"
+    depends_on:
+      beellama:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      # Hard defaults; .env can override.
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://beellama:8083/v1}
+      CUDA_VISIBLE_DEVICES: "1"
+    volumes:
+      - ./audio-service:/app
+      - audio-cache:/app/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']   # 3090 Ti
+              capabilities: [gpu]
+
+networks:
+  voicenet:
+    driver: bridge
+
+volumes:
+  audio-cache:

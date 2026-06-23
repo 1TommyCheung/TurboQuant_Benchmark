@@ -1,0 +1,57 @@
+# Dockerfile for the Pattern C audio service (VAD + STT + TTS + orchestrator).
+# Runs on RTX 3090 Ti (sm_86); LLM lives in the sibling beellama container on the 4090.
+#
+# CUDA 12 base (NOT 13): faster-whisper's ctranslate2 backend is linked against
+# libcublas.so.12; torch/onnxruntime wheels here are CUDA 12 builds. The host's
+# CUDA 13.2 driver is backward-compatible with a CUDA 12 runtime. (The beellama
+# container stays on CUDA 13 since that's what it was compiled against.)
+FROM nvidia/cuda:12.6.0-runtime-ubuntu24.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# System deps:
+#   python3.12    — runtime (native on Ubuntu 24.04 / noble)
+#   ffmpeg        — audio decoding for faster-whisper
+#   libsndfile1   — soundfile backend
+#   espeak-ng     — Kokoro phonemizer fallback
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3.12 \
+        python3.12-venv \
+        python3-pip \
+        ffmpeg \
+        libsndfile1 \
+        espeak-ng \
+        ca-certificates \
+    && ln -sf /usr/bin/python3.12 /usr/local/bin/python \
+    && ln -sf /usr/bin/python3.12 /usr/local/bin/python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python deps first for better layer caching.
+COPY audio-service/requirements.txt /app/requirements.txt
+RUN pip install --break-system-packages -r /app/requirements.txt
+
+# Pre-install spaCy model that Kokoro's `misaki` g2p requires (en_core_web_sm).
+# Without this, misaki tries `spacy.cli.download()` at runtime and crashes the
+# app on first request. Doing it at build time avoids runtime network needs.
+# Version 3.8.0 matches the spaCy 3.8.x that kokoro pulls in (do NOT downgrade).
+RUN python -m pip install --break-system-packages --no-deps \
+        "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" \
+    && python -c "import spacy; nlp=spacy.load('en_core_web_sm'); print('spacy', spacy.__version__, 'model ok')"
+
+# Application source.
+COPY audio-service/ /app/
+
+# Pin to 3090 Ti (logical GPU index 1 on host).
+ENV CUDA_VISIBLE_DEVICES=1 \
+    HF_HOME=/app/.cache/huggingface \
+    PORT=8090
+
+EXPOSE 8090
+
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8090"]
