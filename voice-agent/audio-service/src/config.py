@@ -49,6 +49,23 @@ class Settings(BaseSettings):
     STT_COMPUTE_TYPE: str = "int8"
     STT_LANGUAGE: str = "en"
     STT_RECYCLE_EVERY: int = 500  # subprocess recycle
+    # Speculative early-start: when audio energy drops (silence onset), begin
+    # transcribing the utterance-so-far in parallel with the VAD's
+    # MIN_SILENCE confirmation window. If VAD confirms the endpoint with no
+    # further speech, the transcript is already done -> STT latency hidden.
+    # If speech resumes (false endpoint), the speculative result is discarded.
+    # Silero remains the sole source of truth for the real endpoint, so this
+    # adds zero transcription-quality risk.
+    STT_SPECULATIVE: bool = True
+    # RMS below this (on a 0..1 float32 window) counts as "silence" for the
+    # speculation trigger. Independent of Silero's own neural threshold.
+    STT_SPEC_SILENCE_RMS: float = 0.012
+    # Require this many CONSECUTIVE silent windows (32ms each) before arming
+    # the speculative transcribe. A single low-energy window is just an
+    # intra-word pause; sustained silence is more likely a real endpoint.
+    # Keep this < VAD_MIN_SILENCE_MS so we still beat Silero's confirmation.
+    # 150ms / 32ms ~= 5 windows; with MIN_SILENCE=300ms that still saves ~150ms.
+    STT_SPEC_SILENCE_WINDOWS: int = 5
 
     # TTS (Kokoro)
     TTS_LANG_CODE: str = "a"  # American English

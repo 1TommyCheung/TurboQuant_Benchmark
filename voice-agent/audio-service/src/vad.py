@@ -88,6 +88,20 @@ class SileroVAD:
         self._inbuf: list[np.ndarray] = []
         self._inbuf_len: int = 0
 
+        # Speculative silence-onset detection (energy-based, independent of
+        # Silero's neural endpoint). Emits one 'silence_onset' per speech run.
+        self._spec_enabled: bool = bool(
+            getattr(settings, "STT_SPECULATIVE", True)
+        )
+        self._spec_silence_rms: float = float(
+            getattr(settings, "STT_SPEC_SILENCE_RMS", 0.012)
+        )
+        self._spec_silence_windows: int = int(
+            getattr(settings, "STT_SPEC_SILENCE_WINDOWS", 5)
+        )
+        self._spec_armed: bool = False
+        self._spec_silence_run: int = 0
+
     # ------------------------------------------------------------------ #
     # construction helpers
     # ------------------------------------------------------------------ #
@@ -161,11 +175,40 @@ class SileroVAD:
         else:
             self._preroll.append(window)
 
+        # Speculative silence-onset detection. While inside speech, watch the
+        # raw RMS energy. The first window that drops to "silence" emits a
+        # lightweight 'silence_onset' event carrying the utterance-so-far, so
+        # the orchestrator can speculatively start STT during Silero's
+        # MIN_SILENCE confirmation window. Silero still owns the real 'end'.
         if raw is None:
+            if (
+                self._spec_enabled
+                and self._in_speech
+                and not self._spec_armed
+            ):
+                rms = float(np.sqrt(np.mean(window.astype(np.float32) ** 2)))
+                if rms < self._spec_silence_rms:
+                    self._spec_silence_run += 1
+                else:
+                    # Voiced window — reset; this was an intra-word pause.
+                    self._spec_silence_run = 0
+                # Only arm after a sustained run of silence: a single quiet
+                # window is just a pause between words and would truncate the
+                # utterance mid-sentence (Whisper then hallucinates).
+                if self._spec_silence_run >= self._spec_silence_windows:
+                    self._spec_armed = True
+                    utt = (
+                        np.concatenate(self._utterance)
+                        if self._utterance
+                        else np.zeros(0, dtype=np.float32)
+                    )
+                    return {"event": "silence_onset", "audio": utt}
             return None
 
         if "start" in raw:
             self._in_speech = True
+            self._spec_armed = False  # new speech run: re-arm speculation
+            self._spec_silence_run = 0
             # Seed the utterance buffer with the pre-roll so STT receives
             # the audio leading into the trigger point.
             preroll = list(self._preroll)
@@ -183,6 +226,8 @@ class SileroVAD:
 
         if "end" in raw:
             self._in_speech = False
+            self._spec_armed = False
+            self._spec_silence_run = 0
             utterance = (
                 np.concatenate(self._utterance)
                 if self._utterance
@@ -205,6 +250,8 @@ class SileroVAD:
         self._in_speech = False
         self._inbuf = []
         self._inbuf_len = 0
+        self._spec_armed = False
+        self._spec_silence_run = 0
 
     # ------------------------------------------------------------------ #
     # introspection

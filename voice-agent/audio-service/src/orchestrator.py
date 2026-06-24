@@ -106,6 +106,15 @@ class VoicePipeline:
         # Handle to the current LLM stream (openai SDK) so we can close it.
         self._llm_stream: Any = None
 
+        # Speculative STT: a transcribe task started at silence-onset, plus
+        # the sample-length it covered (so we can detect whether the final
+        # utterance grew — i.e. speech resumed — and the spec result is stale).
+        self._spec_stt_task: Optional[asyncio.Task[str]] = None
+        self._spec_stt_len: int = 0
+        # Set True if a 'start' (speech resumed) arrives after a speculative
+        # silence-onset — invalidates the in-flight spec transcript.
+        self._spec_speech_resumed: bool = False
+
     # ------------------------------------------------------------------ #
     # Public API
     # ------------------------------------------------------------------ #
@@ -135,7 +144,16 @@ class VoicePipeline:
 
                 etype = event.get("event") or event.get("type")
                 if etype == "start":
+                    # If speech resumed after a speculative silence-onset, the
+                    # pending spec transcript is stale — mark it.
+                    if self._spec_stt_task is not None:
+                        self._spec_speech_resumed = True
                     await self._on_speech_start()
+                elif etype == "silence_onset":
+                    # Energy dropped — speculatively start STT now, overlapping
+                    # the VAD's MIN_SILENCE confirmation window.
+                    self._spec_speech_resumed = False
+                    self._spec_stt_start(event.get("audio"))
                 elif etype == "end":
                     utterance = event.get("audio")
                     if utterance is None or len(utterance) == 0:
@@ -407,12 +425,65 @@ class VoicePipeline:
     # Helpers
     # ------------------------------------------------------------------ #
 
-    async def _transcribe(self, audio: np.ndarray) -> str:
-        """Call STT; supports both sync and async wrappers."""
+    def _spec_stt_start(self, audio: Optional[np.ndarray]) -> None:
+        """Speculatively begin transcribing at silence onset.
+
+        Runs in parallel with the VAD's MIN_SILENCE confirmation window. If
+        the confirmed endpoint utterance matches what we transcribed here
+        (no further speech arrived), ``_transcribe`` reuses this result and
+        STT latency is fully hidden. If speech resumed, the final utterance
+        is longer and we transparently fall back to a fresh transcribe.
+        """
+        if audio is None or len(audio) == 0:
+            return
+        # Cancel any prior speculative task (shouldn't happen — one per run).
+        if self._spec_stt_task is not None and not self._spec_stt_task.done():
+            self._spec_stt_task.cancel()
+        self._spec_stt_len = int(len(audio))
+        self._spec_stt_task = asyncio.create_task(self._transcribe_raw(audio))
+
+    async def _transcribe_raw(self, audio: np.ndarray) -> str:
+        """Bare STT call (sync or async wrapper). No speculation logic."""
         result = self.stt.transcribe(audio)
         if asyncio.iscoroutine(result):
             result = await result
         return result or ""
+
+    async def _transcribe(self, audio: np.ndarray) -> str:
+        """Transcribe the confirmed utterance, reusing a speculative result
+        when it covered the same audio.
+
+        The endpoint utterance is the spec audio plus the trailing silence
+        Silero waited through. If no new speech arrived, the spec transcript
+        is valid (trailing silence adds no words). We treat the spec result
+        as usable when the final utterance is no more than a small tolerance
+        longer than what we speculatively transcribed; otherwise we re-run.
+        """
+        spec_task = self._spec_stt_task
+        resumed = self._spec_speech_resumed
+        self._spec_stt_task = None
+        self._spec_stt_len = 0
+        self._spec_speech_resumed = False
+
+        if spec_task is not None:
+            # The spec transcript covers audio from speech-start to the
+            # silence-onset. It's valid iff no real speech resumed between
+            # onset and the confirmed endpoint (only trailing silence was
+            # added, which contributes no transcript). `resumed` is set by
+            # the dispatcher when a 'start' fired while the spec was pending.
+            if not resumed:
+                try:
+                    text = await spec_task
+                    logger.info("[timing] STT served from speculative task")
+                    return text
+                except asyncio.CancelledError:
+                    pass
+                except Exception:  # noqa: BLE001
+                    logger.exception("speculative STT failed; falling back")
+            else:
+                spec_task.cancel()
+
+        return await self._transcribe_raw(audio)
 
     async def _drain_current_response(self, timeout: float = 15.0) -> None:
         """Wait for the active response to finish sending audio.
@@ -434,6 +505,12 @@ class VoicePipeline:
     async def _cancel_current_response(self) -> None:
         """Stop the active TTS task and abort the LLM stream."""
         await self.turn_controller.cancel_current()
+
+        # Discard any in-flight speculative STT (barge-in / disconnect).
+        if self._spec_stt_task is not None and not self._spec_stt_task.done():
+            self._spec_stt_task.cancel()
+        self._spec_stt_task = None
+        self._spec_stt_len = 0
 
         # Abort LLM if the client exposes a generic abort hook.
         abort = getattr(self.llm_client, "abort_generation", None)
