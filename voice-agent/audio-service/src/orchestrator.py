@@ -33,10 +33,21 @@ logger = logging.getLogger(__name__)
 # Split a buffer on sentence-ending punctuation followed by whitespace.
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
+# Clause-boundary split (comma / semicolon / colon / dash + whitespace). Used
+# ONLY for the FIRST fragment of a turn to minimize time-to-first-audio: the
+# LLM is prompted to open with "Sure," / "Well," so we can fire TTS on that
+# leading clause (~150ms of audio) instead of waiting for the first full
+# sentence (~25 words). After the first fragment we fall back to sentence
+# boundaries for natural prosody on the rest of the reply.
+_CLAUSE_END = re.compile(r"(?<=[,;:])\s+|(?<=[.!?])\s+")
+
 # Minimum characters before we flush a fragment to TTS. Avoids synthesizing
 # tiny fragments like "Hi." (which would still work, but we want at least
 # enough text for Kokoro to produce a smooth chunk).
 _MIN_SENTENCE_CHARS = 10
+# Lower bar for the first clause — "Well," is only 5 chars but firing it
+# immediately is worth ~300ms of perceived latency.
+_MIN_FIRST_CLAUSE_CHARS = 4
 
 
 class VoicePipeline:
@@ -176,16 +187,24 @@ class VoicePipeline:
         audio_out: Callable[[np.ndarray], Awaitable[None]],
     ) -> None:
         """User stopped speaking — transcribe, then kick off LLM+TTS."""
+        import time as _time
+        t_end = _time.perf_counter()
+        utt_s = len(utterance) / float(self.settings.SAMPLE_RATE_IN)
         transcript = await self._transcribe(utterance)
+        t_stt = _time.perf_counter()
         transcript = (transcript or "").strip()
         if not transcript:
             logger.debug("empty transcript, skipping turn")
             return
 
-        logger.info("user: %s", transcript)
+        logger.info(
+            "[timing] utterance=%.2fs STT=%.0fms -> user: %s",
+            utt_s, (t_stt - t_end) * 1000, transcript,
+        )
         self._history.append({"role": "user", "content": transcript})
 
         turn_id = await self.turn_controller.new_turn()
+        self._turn_t0 = t_stt  # response pipeline measures from here
         self._tts_task = asyncio.create_task(
             self._run_response(turn_id, audio_out)
         )
@@ -201,11 +220,25 @@ class VoicePipeline:
     ) -> None:
         """Stream one assistant turn: tokens -> sentences -> audio chunks."""
         assistant_text_parts: list[str] = []
+        import time as _time
+        t0 = getattr(self, "_turn_t0", None) or _time.perf_counter()
+        first_token_logged = False
+        first_audio_logged = False
         try:
-            token_stream = self._strip_think(self._stream_llm_tokens(self._history))
+            token_stream = self._strip_think(
+                self._timed_first_token(
+                    self._stream_llm_tokens(self._history), t0
+                )
+            )
             async for audio_chunk in self._tts_from_tokens(
                 token_stream, assistant_text_parts
             ):
+                if not first_audio_logged:
+                    logger.info(
+                        "[timing] STT_end->first_audio=%.0fms",
+                        (_time.perf_counter() - t0) * 1000,
+                    )
+                    first_audio_logged = True
                 if not self.turn_controller.is_active(turn_id):
                     logger.debug("turn %s superseded, dropping audio", turn_id)
                     return
@@ -257,6 +290,21 @@ class VoicePipeline:
         finally:
             await self._close_llm_stream()
 
+    async def _timed_first_token(
+        self, token_stream: AsyncIterator[str], t0: float
+    ) -> AsyncIterator[str]:
+        """Pass-through that logs LLM time-to-first-token (raw, pre-think-strip)."""
+        import time as _time
+        logged = False
+        async for token in token_stream:
+            if not logged and token:
+                logger.info(
+                    "[timing] STT_end->LLM_first_token=%.0fms",
+                    (_time.perf_counter() - t0) * 1000,
+                )
+                logged = True
+            yield token
+
     async def _strip_think(
         self, token_stream: AsyncIterator[str]
     ) -> AsyncIterator[str]:
@@ -299,27 +347,42 @@ class VoicePipeline:
         token_stream: AsyncIterator[str],
         text_sink: list[str],
     ) -> AsyncIterator[np.ndarray]:
-        """Group tokens into sentences, feed Kokoro, yield audio chunks."""
+        """Group tokens into chunks, feed Kokoro, yield audio.
+
+        The FIRST chunk of a turn fires on a clause boundary (comma/colon/
+        semicolon as well as sentence-end) so the LLM's leading "Well," /
+        "Sure," acknowledgement starts synthesizing immediately — this is the
+        single biggest TTFTAudio win. After the first chunk, we revert to
+        sentence boundaries for natural prosody on the body of the reply.
+        """
         voice = getattr(self.settings, "TTS_VOICE", "af_heart")
         buf = ""
+        first_done = False
 
         async for token in token_stream:
             text_sink.append(token)
             buf += token
-            parts = _SENTENCE_END.split(buf)
+            # Use clause splitting until the first chunk is emitted, then
+            # sentence splitting for the remainder.
+            splitter = _SENTENCE_END if first_done else _CLAUSE_END
+            min_chars = _MIN_SENTENCE_CHARS if first_done else _MIN_FIRST_CLAUSE_CHARS
+            parts = splitter.split(buf)
             while len(parts) > 1:
-                sentence = parts.pop(0).strip()
+                fragment = parts.pop(0).strip()
                 buf = " ".join(parts)
-                if len(sentence) >= _MIN_SENTENCE_CHARS:
-                    async for audio_chunk in self._synthesize(sentence, voice):
+                if len(fragment) >= min_chars:
+                    async for audio_chunk in self._synthesize(fragment, voice):
                         yield audio_chunk
+                    first_done = True
+                    splitter = _SENTENCE_END
+                    min_chars = _MIN_SENTENCE_CHARS
                 else:
                     # Too short to bother — re-attach to the next fragment
                     # and stop splitting until more tokens arrive (else we
                     # would loop forever on the same boundary).
-                    buf = f"{sentence} {buf}" if buf else sentence
+                    buf = f"{fragment} {buf}" if buf else fragment
                     break
-                parts = _SENTENCE_END.split(buf)
+                parts = splitter.split(buf)
 
         tail = buf.strip()
         if tail:
