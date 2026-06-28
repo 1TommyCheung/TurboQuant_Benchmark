@@ -1,5 +1,10 @@
 # voice-agent — Pattern C real-time voice loop
 
+> **Embedding this in another project?** See
+> [`../docs/voice-agent/INTEGRATION.md`](../docs/voice-agent/INTEGRATION.md) —
+> the portable integration guide (WebSocket contract, deploy steps, component
+> swap interfaces, latency breakdown). This README covers local development.
+
 Real-time `ASR -> LLM -> TTS` voice agent built on the TurboQuant_Benchmark
 stack. Targets **<800 ms speech-end-to-first-audio** on a split-GPU topology:
 the LLM runs in Docker on an RTX 4090, the audio stack (Whisper + Kokoro +
